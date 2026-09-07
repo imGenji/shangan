@@ -1,0 +1,80 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const articles = (await getCollection("articles")).sort((a, b) => a.data.day - b.data.day);
+const base = import.meta.env.BASE_URL;
+---
+
+<BaseLayout title="备考笔记 · 省考行测">
+  <section class="intro">
+    <p class="meta">省考行测 · 90 天计划</p>
+    <h1>按真题占比排的学习顺序</h1>
+    <p class="lede">
+      每天一篇，一篇只讲透一个考点。天数是按近十年真题里各题型的实际占比分配的，考得多的多花几天，不平均用力。
+    </p>
+  </section>
+
+  <ol class="list">
+    {
+      articles.map((a) => (
+        <li>
+          <a href={`${base}articles/${a.id}/`}>
+            <div class="row">
+              <span class="meta day">Day {String(a.data.day).padStart(2, "0")}</span>
+              {a.data.topic && <span class="meta">{a.data.topic}</span>}
+              {a.data.readMinutes && <span class="meta">约 {a.data.readMinutes} 分钟</span>}
+            </div>
+            <h2>{a.data.title}</h2>
+            <p>{a.data.summary}</p>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</BaseLayout>
+
+<style>
+  .intro {
+    max-width: var(--w-text);
+    margin-bottom: 3.5rem;
+  }
+  .intro h1 {
+    font-size: 2rem;
+    margin: 0.5rem 0 1rem;
+  }
+  .lede {
+    color: var(--c-text-muted);
+    margin: 0;
+  }
+  .list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: var(--w-text);
+  }
+  .list li {
+    border-top: 1px solid var(--c-border);
+  }
+  .list a {
+    display: block;
+    padding: 1.5rem 0;
+    text-decoration: none;
+  }
+  .row {
+    display: flex;
+    gap: 1rem;
+  }
+  .day {
+    color: var(--accent);
+  }
+  .list h2 {
+    font-size: 1.15rem;
+    margin: 0.4rem 0 0.5rem;
+  }
+  .list p {
+    margin: 0;
+    color: var(--c-text-muted);
+    font-size: 0.94rem;
+  }
+</style>

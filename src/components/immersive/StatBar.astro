@@ -1,0 +1,73 @@
+---
+interface Row {
+  label: string;
+  value: number;
+  suffix?: string;
+}
+
+interface Props {
+  title?: string;
+  rows: Row[];
+  /** 以最大值归一化条形宽度 */
+  max?: number;
+}
+
+const { title, rows, max } = Astro.props;
+const peak = max ?? Math.max(...rows.map((r) => r.value), 1);
+---
+
+<div class="statbar">
+  {title && <p class="meta title">{title}</p>}
+  {
+    rows.map((r) => (
+      <div class="row">
+        <span class="label">{r.label}</span>
+        <div class="track">
+          <div class="fill" style={`width:${(r.value / peak) * 100}%`} />
+        </div>
+        <span class="val">
+          {r.value}
+          {r.suffix ?? ""}
+        </span>
+      </div>
+    ))
+  }
+</div>
+
+<style>
+  .statbar {
+    margin: 1.75rem 0;
+    display: grid;
+    gap: 0.55rem;
+  }
+  .title {
+    margin-bottom: 0.25rem;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 7.5rem 1fr 3.5rem;
+    gap: 0.65rem;
+    align-items: center;
+  }
+  .label {
+    font-size: 0.88rem;
+    color: var(--c-text-muted);
+  }
+  .track {
+    height: 0.55rem;
+    background: var(--c-border);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 999px;
+  }
+  .val {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--c-text-dim);
+    text-align: right;
+  }
+</style>

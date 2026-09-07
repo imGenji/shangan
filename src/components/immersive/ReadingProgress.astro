@@ -1,0 +1,26 @@
+<div id="read-progress" aria-hidden="true"></div>
+
+<script>
+  const bar = document.getElementById("read-progress")!;
+  const paint = () => {
+    const doc = document.documentElement;
+    const max = doc.scrollHeight - doc.clientHeight;
+    const p = max > 0 ? (window.scrollY / max) * 100 : 0;
+    bar.style.width = `${p}%`;
+  };
+  paint();
+  window.addEventListener("scroll", paint, { passive: true });
+</script>
+
+<style is:global>
+  #read-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    width: 0;
+    background: var(--accent);
+    z-index: 50;
+    pointer-events: none;
+  }
+</style>

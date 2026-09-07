@@ -1,0 +1,51 @@
+---
+interface Props {
+  id: string;
+  num: number | string;
+  title: string;
+}
+
+const { id, num, title } = Astro.props;
+const label = String(num).padStart(2, "0");
+---
+
+<section class="chap" id={id}>
+  <div class="chap-head">
+    <span class="meta num">{label}</span>
+    <h2>{title}</h2>
+  </div>
+  <div class="chap-body">
+    <slot />
+  </div>
+</section>
+
+<style>
+  .chap {
+    margin: 3.5rem 0;
+    scroll-margin-top: 4rem;
+  }
+  .chap-head {
+    display: flex;
+    gap: 0.85rem;
+    align-items: baseline;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--c-border);
+  }
+  .num {
+    color: var(--accent);
+    min-width: 2rem;
+  }
+  h2 {
+    margin: 0;
+    font-size: 1.35rem;
+  }
+  .chap-body :global(p) {
+    margin: 0.85rem 0;
+  }
+  .chap-body :global(ul),
+  .chap-body :global(ol) {
+    margin: 0.75rem 0;
+    padding-left: 1.25rem;
+  }
+</style>

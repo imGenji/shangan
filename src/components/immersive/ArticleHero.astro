@@ -1,0 +1,52 @@
+---
+interface Props {
+  day?: number;
+  topic?: string;
+  date?: string;
+  readMinutes?: number;
+  title: string;
+  summary: string;
+}
+
+const { day, topic, date, readMinutes, title, summary } = Astro.props;
+---
+
+<header class="hero">
+  {
+    day !== undefined && (
+      <div class="row">
+        <span class="meta day">Day {String(day).padStart(2, "0")}</span>
+        {topic && <span class="meta">{topic}</span>}
+        {date && <span class="meta">{date}</span>}
+        {readMinutes && <span class="meta">约 {readMinutes} 分钟</span>}
+      </div>
+    )
+  }
+  <h1>{title}</h1>
+  <p class="lede">{summary}</p>
+</header>
+
+<style>
+  .hero {
+    margin-bottom: 3rem;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    margin-bottom: 0.75rem;
+  }
+  .day {
+    color: var(--accent);
+  }
+  h1 {
+    font-size: clamp(1.75rem, 4vw, 2.35rem);
+    margin: 0 0 1rem;
+  }
+  .lede {
+    color: var(--c-text-muted);
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.8;
+  }
+</style>

@@ -1,0 +1,54 @@
+---
+interface Props {
+  headers: string[];
+  rows: string[][];
+}
+
+const { headers, rows } = Astro.props;
+---
+
+<div class="keytable">
+  <table>
+    <thead>
+      <tr>{headers.map((h) => <th>{h}</th>)}</tr>
+    </thead>
+    <tbody>
+      {
+        rows.map((row) => (
+          <tr>
+            {row.map((cell) => (
+              <td>{cell}</td>
+            ))}
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .keytable {
+    margin: 1.75rem 0;
+    overflow-x: auto;
+    border: 1px solid var(--c-border);
+    border-radius: 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+  th,
+  td {
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid var(--c-border);
+    text-align: left;
+  }
+  th {
+    background: var(--c-bg-alt);
+    font-weight: 600;
+  }
+  tr:last-child td {
+    border-bottom: 0;
+  }
+</style>

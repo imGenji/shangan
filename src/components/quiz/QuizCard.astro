@@ -1,0 +1,249 @@
+---
+interface Props {
+  id: string;
+  stem: string;
+  options: { key: string; text: string }[];
+  answer: string;
+  analysis?: string;
+  label?: string;
+}
+
+const { id, stem, options, answer, analysis, label = "真题练习" } = Astro.props;
+const payload = JSON.stringify({ id, answer, analysis: analysis ?? "" });
+---
+
+<section class="quiz" data-quiz={payload}>
+  <div class="quiz-head">
+    <span class="meta">{label}</span>
+    <button type="button" class="quiz-reset meta" hidden>重做</button>
+  </div>
+  <p class="quiz-stem">{stem}</p>
+  <ul class="quiz-options" role="listbox" aria-label="选项">
+    {
+      options.map((o) => (
+        <li>
+          <button type="button" class="quiz-opt" data-key={o.key}>
+            <span class="key">{o.key}</span>
+            <span class="text">{o.text}</span>
+          </button>
+        </li>
+      ))
+    }
+  </ul>
+  <div class="quiz-actions">
+    <button type="button" class="quiz-submit" disabled>提交答案</button>
+    <p class="quiz-result meta" aria-live="polite"></p>
+  </div>
+  <div class="quiz-analysis" hidden>
+    <p class="meta">解析</p>
+    <div class="analysis-body">
+      {analysis ? <p class="analysis-text">{analysis}</p> : <p class="muted">暂无文字解析，对照正确选项复盘即可。</p>}
+    </div>
+  </div>
+</section>
+
+<script>
+  const KEY = "quiz-done";
+
+  function readDone(): Record<string, string> {
+    try {
+      return JSON.parse(localStorage.getItem(KEY) ?? "{}");
+    } catch {
+      return {};
+    }
+  }
+
+  function writeDone(id: string, pick: string) {
+    const all = readDone();
+    all[id] = pick;
+    localStorage.setItem(KEY, JSON.stringify(all));
+  }
+
+  document.querySelectorAll<HTMLElement>("[data-quiz]").forEach((root) => {
+    const meta = JSON.parse(root.dataset.quiz!);
+    const { id, answer, analysis } = meta;
+    const opts = [...root.querySelectorAll<HTMLButtonElement>(".quiz-opt")];
+    const submit = root.querySelector<HTMLButtonElement>(".quiz-submit")!;
+    const result = root.querySelector<HTMLElement>(".quiz-result")!;
+    const analysisBox = root.querySelector<HTMLElement>(".quiz-analysis")!;
+    const resetBtn = root.querySelector<HTMLButtonElement>(".quiz-reset")!;
+    let pick = "";
+
+    const paint = (revealed: boolean) => {
+      opts.forEach((btn) => {
+        btn.classList.toggle("selected", btn.dataset.key === pick);
+        btn.disabled = revealed;
+        if (revealed) {
+          const k = btn.dataset.key!;
+          btn.classList.toggle("correct", k === answer);
+          btn.classList.toggle("wrong", k === pick && k !== answer);
+        } else {
+          btn.classList.remove("correct", "wrong");
+        }
+      });
+      submit.disabled = !pick || revealed;
+      resetBtn.hidden = !revealed;
+    };
+
+    const reveal = () => {
+      const ok = pick === answer;
+      result.textContent = ok ? "回答正确" : `回答错误 · 正确答案是 ${answer}`;
+      result.dataset.ok = String(ok);
+      analysisBox.hidden = false;
+      paint(true);
+      writeDone(id, pick);
+    };
+
+    opts.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (submit.disabled && pick) return;
+        pick = btn.dataset.key!;
+        paint(false);
+        submit.disabled = false;
+      });
+    });
+
+    submit.addEventListener("click", reveal);
+
+    resetBtn.addEventListener("click", () => {
+      pick = "";
+      result.textContent = "";
+      delete result.dataset.ok;
+      analysisBox.hidden = true;
+      const all = readDone();
+      delete all[id];
+      localStorage.setItem(KEY, JSON.stringify(all));
+      paint(false);
+    });
+
+    const saved = readDone()[id];
+    if (saved) {
+      pick = saved;
+      reveal();
+    } else {
+      paint(false);
+    }
+  });
+</script>
+
+<style>
+  .quiz {
+    margin: 2.5rem 0;
+    padding: 1.25rem 1.35rem;
+    border: 1px solid var(--c-border);
+    border-radius: 8px;
+    background: var(--c-bg-alt);
+  }
+  .quiz-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  .quiz-reset {
+    background: none;
+    border: 0;
+    cursor: pointer;
+    color: var(--c-text-dim);
+    font: inherit;
+    padding: 0;
+  }
+  .quiz-reset:hover {
+    color: var(--accent);
+  }
+  .quiz-stem {
+    margin: 0 0 1rem;
+    line-height: 1.8;
+  }
+  .quiz-options {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.5rem;
+  }
+  .quiz-opt {
+    width: 100%;
+    display: flex;
+    gap: 0.65rem;
+    align-items: flex-start;
+    text-align: left;
+    background: var(--c-bg);
+    border: 1px solid var(--c-border-light);
+    border-radius: 6px;
+    color: var(--c-text);
+    cursor: pointer;
+    font: inherit;
+    line-height: 1.6;
+    padding: 0.65rem 0.75rem;
+  }
+  .quiz-opt:hover:not(:disabled) {
+    border-color: var(--accent);
+  }
+  .quiz-opt.selected:not(:disabled) {
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+  .quiz-opt.correct {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, var(--c-bg));
+  }
+  .quiz-opt.wrong {
+    border-color: #f87171;
+    background: color-mix(in srgb, #f87171 10%, var(--c-bg));
+  }
+  .key {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--c-text-muted);
+    min-width: 1.2rem;
+  }
+  .quiz-actions {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .quiz-submit {
+    background: none;
+    border: 1px solid var(--c-border-light);
+    border-radius: 6px;
+    color: var(--c-text);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.9rem;
+    padding: 0.45rem 1rem;
+  }
+  .quiz-submit:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .quiz-submit:not(:disabled):hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .quiz-result[data-ok="true"] {
+    color: var(--accent);
+  }
+  .quiz-result[data-ok="false"] {
+    color: #f87171;
+  }
+  .quiz-analysis {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--c-border);
+  }
+  .analysis-body {
+    color: var(--c-text-muted);
+    margin-top: 0.5rem;
+  }
+  .analysis-text {
+    margin: 0;
+    white-space: pre-line;
+    line-height: 1.85;
+    font-size: 0.92rem;
+  }
+  .muted {
+    color: var(--c-text-dim);
+  }
+</style>

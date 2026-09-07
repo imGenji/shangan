@@ -1,0 +1,64 @@
+---
+interface Item {
+  id: string;
+  text: string;
+}
+
+interface Props {
+  items: Item[];
+  storageKey?: string;
+}
+
+const { items, storageKey = "actions" } = Astro.props;
+const payload = JSON.stringify({ key: storageKey, ids: items.map((i) => i.id) });
+---
+
+<ul class="actions" data-actions={payload}>
+  {
+    items.map((it) => (
+      <li>
+        <label>
+          <input type="checkbox" data-id={it.id} />
+          <span>{it.text}</span>
+        </label>
+      </li>
+    ))
+  }
+</ul>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-actions]").forEach((root) => {
+    const { key, ids } = JSON.parse(root.dataset.actions!);
+    const storeKey = `action-${key}`;
+    const saved: string[] = JSON.parse(localStorage.getItem(storeKey) ?? "[]");
+    root.querySelectorAll<HTMLInputElement>("input[type=checkbox]").forEach((cb) => {
+      cb.checked = saved.includes(cb.dataset.id!);
+      cb.addEventListener("change", () => {
+        const set = new Set<string>(
+          [...root.querySelectorAll<HTMLInputElement>("input:checked")].map((x) => x.dataset.id!),
+        );
+        localStorage.setItem(storeKey, JSON.stringify([...set]));
+      });
+    });
+  });
+</script>
+
+<style>
+  .actions {
+    list-style: none;
+    margin: 1.25rem 0;
+    padding: 0;
+    display: grid;
+    gap: 0.55rem;
+  }
+  label {
+    display: flex;
+    gap: 0.65rem;
+    align-items: flex-start;
+    cursor: pointer;
+  }
+  input {
+    margin-top: 0.35rem;
+    accent-color: var(--accent);
+  }
+</style>

@@ -1,0 +1,89 @@
+---
+import "../styles/theme.css";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = "省考行测备考笔记" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {/* 在首次绘制前定好主题，避免暗色站点闪白 */}
+    <script is:inline>
+      const saved = localStorage.getItem("mode");
+      document.documentElement.dataset.mode =
+        saved ?? (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+    </script>
+  </head>
+  <body>
+    <header class="shell site-head">
+      <a href={import.meta.env.BASE_URL} class="brand">备考笔记</a>
+      <button id="mode-toggle" type="button" class="meta" aria-label="切换明暗模式">明 / 暗</button>
+    </header>
+
+    <main class="shell">
+      <slot />
+    </main>
+
+    <footer class="shell site-foot">
+      <span class="meta">个人学习笔记 · 内容由 AI 辅助生成</span>
+    </footer>
+
+    <script is:inline>
+      document.getElementById("mode-toggle").addEventListener("click", () => {
+        const next = document.documentElement.dataset.mode === "light" ? "dark" : "light";
+        document.documentElement.dataset.mode = next;
+        localStorage.setItem("mode", next);
+      });
+    </script>
+
+    <style>
+      .site-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 3.5rem;
+        border-bottom: 1px solid var(--c-border);
+        max-width: var(--w-page);
+      }
+      .brand {
+        font-weight: 600;
+        text-decoration: none;
+      }
+      #mode-toggle {
+        background: none;
+        border: 0;
+        cursor: pointer;
+        color: var(--c-text-dim);
+        font: inherit;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 0;
+      }
+      #mode-toggle:hover {
+        color: var(--accent);
+      }
+      main {
+        min-height: 60vh;
+        padding-top: 3rem;
+        padding-bottom: 4rem;
+      }
+      .site-foot {
+        border-top: 1px solid var(--c-border);
+        padding-top: 1.25rem;
+        padding-bottom: 2.5rem;
+      }
+    </style>
+  </body>
+</html>

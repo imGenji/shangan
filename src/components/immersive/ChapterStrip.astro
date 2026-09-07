@@ -1,0 +1,59 @@
+---
+interface Item {
+  id: string;
+  num: number | string;
+  title: string;
+}
+
+interface Props {
+  items: Item[];
+}
+
+const { items } = Astro.props;
+---
+
+<nav class="strip" aria-label="章节导航">
+  {
+    items.map((it) => (
+      <a href={`#${it.id}`} class="cell">
+        <span class="meta">{String(it.num).padStart(2, "0")}</span>
+        <span class="title">{it.title}</span>
+      </a>
+    ))
+  }
+</nav>
+
+<style>
+  .strip {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.75rem 0 1.25rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--c-border);
+    scrollbar-width: thin;
+  }
+  .cell {
+    flex: 0 0 auto;
+    display: grid;
+    gap: 0.25rem;
+    min-width: 7rem;
+    max-width: 10rem;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid var(--c-border);
+    border-radius: 6px;
+    text-decoration: none;
+    background: var(--c-bg-alt);
+  }
+  .cell:hover {
+    border-color: var(--accent);
+  }
+  .cell .meta {
+    color: var(--accent);
+  }
+  .title {
+    font-size: 0.78rem;
+    line-height: 1.35;
+    color: var(--c-text-muted);
+  }
+</style>

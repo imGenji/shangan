@@ -1,0 +1,27 @@
+---
+import QuizCard from "./QuizCard.astro";
+import type { QuizQuestion } from "../../lib/quizzes";
+import { getQuizAnalysis } from "../../data/quizzes/analyses";
+
+interface Props {
+  /** choices.json 里的 id */
+  id: string;
+  question: QuizQuestion;
+  /** 不传则读 analyses.ts 中的集中解析 */
+  analysis?: string;
+  label?: string;
+}
+
+const { id, question, analysis, label } = Astro.props;
+const entry = getQuizAnalysis(id);
+const analysisText = analysis ?? entry?.text;
+---
+
+<QuizCard
+  id={id}
+  stem={question.stem}
+  options={question.options}
+  answer={question.answer}
+  analysis={analysisText}
+  label={label ?? question.topic}
+/>

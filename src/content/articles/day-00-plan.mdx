@@ -1,0 +1,168 @@
+---
+title: 在开始刷题之前：把这 130 道题拆开看
+summary: 占比告诉你考什么，但它不能告诉你该怎么分配时间——这两件事差得很远。本文用 2025 年国考改革后的真实题量，推导出一份 90 天学习计划。
+day: 0
+date: 2026-09-07
+template: "immersive"
+readMinutes: 35
+---
+
+import ArticleHero from "../../components/immersive/ArticleHero.astro";
+import ChapterStrip from "../../components/immersive/ChapterStrip.astro";
+import Chapter from "../../components/immersive/Chapter.astro";
+import Callout from "../../components/immersive/Callout.astro";
+import StatBar from "../../components/immersive/StatBar.astro";
+import KeyTable from "../../components/immersive/KeyTable.astro";
+import ActionList from "../../components/immersive/ActionList.astro";
+import QuizEmbed from "../../components/quiz/QuizEmbed.astro";
+import { getQuiz } from "../../lib/quizzes";
+
+export const chapters = [
+  { id: "c1", num: 1, title: "120 分钟 130 题" },
+  { id: "c2", num: 2, title: "题量地图" },
+  { id: "c3", num: 3, title: "2025 改革" },
+  { id: "c4", num: 4, title: "稳定的部分" },
+  { id: "c5", num: 5, title: "变动的部分" },
+  { id: "c6", num: 6, title: "你考哪张卷" },
+  { id: "c7", num: 7, title: "错误示范" },
+  { id: "c8", num: 8, title: "三个维度" },
+  { id: "c9", num: 9, title: "性价比排序" },
+  { id: "c10", num: 10, title: "三阶段" },
+  { id: "c11", num: 11, title: "90 天分配" },
+  { id: "c12", num: 12, title: "每日两小时" },
+  { id: "c13", num: 13, title: "今天就开始" },
+];
+
+export const qVerbal = getQuiz("1735356969485-36");
+export const qData = getQuiz("1735356969485-126");
+export const qLogic = getQuiz("1735356969485-86");
+export const qMath = getQuiz("1735356969485-66");
+
+<ArticleHero day={0} date="2026-09-07" readMinutes={35} title="在开始刷题之前：把这 130 道题拆开看" summary="占比告诉你考什么，但它不能告诉你该怎么分配时间——这两件事差得很远。" />
+
+<ChapterStrip items={chapters} />
+
+<Chapter id="c1" num={1} title="120 分钟 130 题：先感受节奏，再谈方法">
+
+行测不是「会不会做」的考试，首先是「来不来得及做」的考试。2025 年起，国考市地级和行政执法类试卷稳定在 **130 题 / 120 分钟**，副省级 **135 题 / 120 分钟**。粗算平均 **55 秒一道**，但这只是算术平均——资料分析一道可能要读材料加四道小题，数量关系里难题可以拖到三分钟，政治理论却可能十秒选一题。
+
+所以备考的第一性原理不是「把书看完」，而是：**在有限时间里，把该拿的分拿稳，把该放的分果断放掉。**
+
+下面先用一道言语题热身。不要查资料，凭第一直觉选，然后点提交——我们后面还会回到「时间」这个话题。
+
+<QuizEmbed id={qVerbal.id} question={qVerbal} />
+
+<Callout tone="tip" title="计时建议">正式做一套行测前，单独计时做 10 道言语题。如果平均超过 45 秒/题，说明你的阅读速度或排除流程需要单独训练——这不是多刷题能自动解决的。</Callout>
+
+</Chapter>
+
+<Chapter id="c2" num={2} title="题量地图：题量占比 ≠ 分值占比">
+
+很多人做学习计划的第一步，是数各模块占多少题，然后按比例分配天数。**这个起点没错，但只完成了一半。**
+
+以 **2025 国考市地级 130 题** 为例（2026 年预计结构不变）：
+
+<StatBar title="题量占比（130 题）" rows={[{ label: "判断推理", value: 35, suffix: "题 · 27%" }, { label: "言语理解", value: 30, suffix: "题 · 23%" }, { label: "政治理论", value: 20, suffix: "题 · 15%" }, { label: "资料分析", value: 20, suffix: "题 · 15%" }, { label: "常识判断", value: 15, suffix: "题 · 12%" }, { label: "数量关系", value: 10, suffix: "题 · 8%" }]} />
+
+但官方从不公布精确分值表，机构根据得分规律反推的 **分值权重** 与题量并不重合：
+
+<StatBar title="估算分值权重（市地级，合计 100 分）" rows={[{ label: "判断推理", value: 28, suffix: "分" }, { label: "言语理解", value: 24, suffix: "分" }, { label: "资料分析", value: 16, suffix: "分" }, { label: "政治理论", value: 16, suffix: "分" }, { label: "常识判断", value: 9, suffix: "分" }, { label: "数量关系", value: 7, suffix: "分" }]} />
+
+看到差异了吗？**数量关系只有 10 题、约 7 分，却常常是全场最耗时的模块**；资料分析 20 题、16 分，熟练后正确率可以拉到 80% 以上，是公认的「性价比之王」。
+
+<Callout tone="warn" title="核心结论">题量告诉你「卷面上长什么样」，分值告诉你「总分里谁更重」，**时间** 才告诉你「考场上该先做什么」。三者混为一谈，计划一定失真。</Callout>
+
+</Chapter>
+
+<Chapter id="c3" num={3} title="2025 年那次改革：命题方向已经写在题量里了">
+
+2025 国考行测做了结构性调整：新增政治理论独立模块（20 题）；言语理解 40→30 题；判断推理 40→35 题（类比 10→5）；资料分析维持四篇二十题。
+
+这意味着命题者在用题量投票：**政治素养被抬到与资料分析同级的战略位置**；纯语感和类比套路的考查在收缩；**资料分析作为「可训练、可稳定拿分」模块的地位没有动摇。**
+
+</Chapter>
+
+<Chapter id="c4" num={4} title="稳定的部分：十年里几乎没动的结构">
+
+1. **资料分析**：4 篇 × 5 题，考点围绕增长率、比重、平均数、倍数。  
+2. **言语理解**：逻辑填空 + 片段阅读 + 语句表达，「定调 → 程度 → 搭配」长期有效。  
+3. **判断推理**：图形 / 定义 / 类比 / 逻辑，其中逻辑判断提分曲线最陡。  
+4. **考试时长**：120 分钟不变——新模块进来，旧模块就要让题量。
+
+</Chapter>
+
+<Chapter id="c5" num={5} title="变动的部分：省考不是国考的复印件">
+
+省考题量常见 **110–135 题**，政治理论在部分省份已跟进（如湖北 15 题）。山东、江苏、浙江、广东等常独立命题。
+
+本仓库已从公开数据导入 **1383 道选择题**（2024–2025 国考及多省联考回忆版）。分布：言语 424、判断 383、常识 257——与联考「文字+推理为主」的体感一致。
+
+<Callout tone="info" title="数据说明">公开题库均为网友回忆版，统计占比和训练足够；解析需自行重写，不要照搬机构原文。</Callout>
+
+</Chapter>
+
+<Chapter id="c6" num={6} title="你考哪张卷：先查大纲">
+
+确认三件事：国考还是省考；试卷类别（副省/市地/行政执法/A·B·C）；是否独立命题省。
+
+<KeyTable headers={["项目", "你的情况", "备注"]} rows={[["考试类型", "（待填）", "国考 / 省考"], ["试卷类别", "（待填）", "副省 / 市地 / 行政执法"], ["行测题量", "（待填）", "官方大纲"], ["考试日期", "（待填）", "倒推剩余天数"]]} />
+
+</Chapter>
+
+<Chapter id="c7" num={7} title="错误示范：按题量均分 90 天">
+
+<KeyTable headers={["模块", "题量占比", "Naive 天数", "问题"]} rows={[["判断推理", "27%", "24 天", "子模块不能同样练法"], ["言语理解", "23%", "21 天", "不练速度则无效"], ["政治理论", "15%", "14 天", "2025 新模块"], ["资料分析", "15%", "14 天", "严重偏低"], ["常识判断", "12%", "11 天", "投入产出比低"], ["数量关系", "8%", "7 天", "不应追求全做"]]} />
+
+</Chapter>
+
+<Chapter id="c8" num={8} title="三个维度：提升空间、时间成本、考场 ROI">
+
+**提升空间**：资料 50%→85% 可能；常识 60%→70% 可能要一年。  
+**单位时间成本**：图形推理学会规律后提升快；数量难题 10 小时多对 1 题。  
+**考场 ROI**：资料一篇 5 题极划算；数量难题 3 分钟可能只值 0.7 分。
+
+<QuizEmbed id={qMath.id} question={qMath} />
+
+</Chapter>
+
+<Chapter id="c9" num={9} title="备考优先级（不是考场做题顺序）">
+
+1. 资料分析  2. 逻辑判断  3. 言语  4. 政治理论  5. 图形/定义/类比  6. 常识  7. 数量（选做）
+
+<QuizEmbed id={qLogic.id} question={qLogic} />
+
+<QuizEmbed id={qData.id} question={qData} label="资料分析 · 先读题再定位" />
+
+</Chapter>
+
+<Chapter id="c10" num={10} title="三阶段：40 + 35 + 15 天">
+
+**打地基 40 天**：方法论 + 错题本，禁止无方法论刷套卷。  
+**攻专项 35 天**：拉薄弱模块，每周 1 套限时模考。  
+**磨速度 15 天**：固定顺序，练「放弃题」决策，每 2 天 1 套完整行测。
+
+</Chapter>
+
+<Chapter id="c11" num={11} title="90 天模块分配（修正版）">
+
+<KeyTable headers={["模块", "天数", "理由"]} rows={[["资料分析", "18", "最快提分"], ["判断推理", "20", "逻辑必练"], ["言语理解", "16", "流程>题海"], ["政治理论", "10", "跟当年热点"], ["数量关系", "8", "高频+选做"], ["常识判断", "6", "碎片积累"], ["套卷复盘", "12", "阶段二末+阶段三"]]} />
+
+日均 1.5–2 小时；若只有 1 小时/天，拉长到 120–150 天，不要砍资料和套卷。
+
+</Chapter>
+
+<Chapter id="c12" num={12} title="每日两小时模板">
+
+40min 主模块专项 → 30min 错题复盘（标错因） → 30min 次模块/政治常识 → 20min 读当日文章。
+
+**考场顺序建议**：资料 → 政治 → 言语 → 判断 → 常识 → 数量（选做）。
+
+</Chapter>
+
+<Chapter id="c13" num={13} title="Coda · 今天的三个动作">
+
+<ActionList storageKey="day-00" items={[{ id: "a1", text: "查大纲，填第 6 章表格" }, { id: "a2", text: "做一套完整行测（不限时），统计各模块对错" }, { id: "a3", text: "对照第 11 章，标记最该先攻的 2 个模块" }]} />
+
+从 Day 1 起逐日更新。**一句话：占比是地图，不是路线。**
+
+</Chapter>
