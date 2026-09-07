@@ -1,9 +1,9 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { withBase } from "../lib/base";
 
 const articles = (await getCollection("articles")).sort((a, b) => a.data.day - b.data.day);
-const base = import.meta.env.BASE_URL;
 ---
 
 <BaseLayout title="备考笔记 · 省考行测">
@@ -19,7 +19,7 @@ const base = import.meta.env.BASE_URL;
     {
       articles.map((a) => (
         <li>
-          <a href={`${base}articles/${a.id}/`}>
+          <a href={withBase(`articles/${a.id}/`)}>
             <div class="row">
               <span class="meta day">Day {String(a.data.day).padStart(2, "0")}</span>
               {a.data.topic && <span class="meta">{a.data.topic}</span>}

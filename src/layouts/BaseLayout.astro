@@ -1,5 +1,6 @@
 ---
 import "../styles/theme.css";
+import { withBase } from "../lib/base";
 
 interface Props {
   title: string;
@@ -14,7 +15,7 @@ const { title, description = "省考行测备考笔记" } = Astro.props;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`} />
+    <link rel="icon" type="image/svg+xml" href={withBase("favicon.svg")} />
     <title>{title}</title>
     <meta name="description" content={description} />
     {/* 在首次绘制前定好主题，避免暗色站点闪白 */}
@@ -26,7 +27,7 @@ const { title, description = "省考行测备考笔记" } = Astro.props;
   </head>
   <body>
     <header class="shell site-head">
-      <a href={import.meta.env.BASE_URL} class="brand">备考笔记</a>
+      <a href={withBase()} class="brand">备考笔记</a>
       <button id="mode-toggle" type="button" class="meta" aria-label="切换明暗模式">明 / 暗</button>
     </header>
 
