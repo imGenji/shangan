@@ -19,7 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: withastro/action@v3
+      - uses: withastro/action@v6
+        with:
+          node-version: 22 # Astro 7 要求 Node >= 22.12
         env:
           # 项目仓库部署在 /<repo> 子路径下；用自定义域名后删掉这一行
           BASE_PATH: /${{ github.event.repository.name }}
