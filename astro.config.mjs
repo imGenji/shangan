@@ -7,6 +7,6 @@ import mdx from "@astrojs/mdx";
 // 换成自定义域名后不设即可。
 export default defineConfig({
   site: "https://imGenji.github.io",
-  base: process.env.BASE_PATH ?? "/shangan",
+  base: process.env.BASE_PATH,
   integrations: [mdx()],
 });

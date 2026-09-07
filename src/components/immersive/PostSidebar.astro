@@ -1,0 +1,157 @@
+---
+import type { TocItem } from "../../lib/toc";
+
+interface Props {
+  date: Date;
+  day: number;
+  topic?: string;
+  readMinutes?: number;
+  author?: string;
+  toc?: TocItem[];
+}
+
+const { date, day, topic, readMinutes, author = "备考笔记", toc = [] } = Astro.props;
+const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "/");
+---
+
+<aside class="sidebar" aria-label="文章信息">
+  <dl class="meta-block">
+    <div class="row">
+      <dt class="meta">Date</dt>
+      <dd>{dateStr}</dd>
+    </div>
+    {
+      topic && (
+        <div class="row">
+          <dt class="meta">Tags</dt>
+          <dd>
+            <a class="tag" href="#">
+              #{topic}
+            </a>
+          </dd>
+        </div>
+      )
+    }
+    <div class="row">
+      <dt class="meta">Day</dt>
+      <dd>Day {String(day).padStart(2, "0")}</dd>
+    </div>
+    <div class="row">
+      <dt class="meta">Author</dt>
+      <dd>{author}</dd>
+    </div>
+    {
+      readMinutes && (
+        <div class="row">
+          <dt class="meta">Read</dt>
+          <dd>{readMinutes} min</dd>
+        </div>
+      )
+    }
+  </dl>
+
+  {
+    toc.length > 0 && (
+      <nav class="toc" aria-label="目录">
+        <p class="meta toc-label">Contents</p>
+        <ol class="toc-list">
+          {toc.map((item) => (
+            <li class:list={[`depth-${item.depth ?? 2}`]}>
+              <a href={`#${item.id}`} data-toc-link={item.id}>
+                {item.text}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    )
+  }
+</aside>
+
+<script>
+  // 滚动时高亮当前章节
+  const links = document.querySelectorAll<HTMLAnchorElement>("[data-toc-link]");
+  if (links.length) {
+    const ids = [...links].map((a) => a.dataset.tocLink!);
+    const sections = ids
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => !!el);
+
+    const setActive = (id: string) => {
+      links.forEach((a) => a.classList.toggle("active", a.dataset.tocLink === id));
+    };
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (visible[0]?.target.id) setActive(visible[0].target.id);
+      },
+      { rootMargin: "-20% 0px -60% 0px", threshold: [0, 0.25, 0.5, 1] },
+    );
+    sections.forEach((s) => io.observe(s));
+
+    if (sections[0]) setActive(sections[0].id);
+  }
+</script>
+
+<style>
+  .sidebar {
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+  .meta-block {
+    margin: 0;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--c-border);
+  }
+  .row {
+    margin: 0 0 0.85rem;
+  }
+  .row dt {
+    margin: 0 0 0.2rem;
+  }
+  .row dd {
+    margin: 0;
+    color: var(--c-text-muted);
+  }
+  .tag {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .tag:hover {
+    text-decoration: underline;
+  }
+  .toc {
+    padding-top: 1.25rem;
+  }
+  .toc-label {
+    margin: 0 0 0.75rem;
+  }
+  .toc-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .toc-list li {
+    margin: 0.35rem 0;
+  }
+  .toc-list a {
+    display: block;
+    padding: 0.15rem 0 0.15rem 0.65rem;
+    border-left: 2px solid transparent;
+    color: var(--c-text-muted);
+    text-decoration: none;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    transition: color 0.12s, border-color 0.12s;
+  }
+  .toc-list a:hover,
+  .toc-list a.active {
+    color: var(--accent);
+    border-left-color: var(--accent);
+  }
+  .toc-list .depth-3 a {
+    padding-left: 1.25rem;
+    font-size: 0.8rem;
+  }
+</style>

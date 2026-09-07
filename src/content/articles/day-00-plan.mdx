@@ -5,10 +5,23 @@ day: 0
 date: 2026-09-07
 template: "immersive"
 readMinutes: 35
+chapters:
+  - { id: c1, num: 1, title: "120 分钟 130 题" }
+  - { id: c2, num: 2, title: "题量地图" }
+  - { id: c3, num: 3, title: "2025 改革" }
+  - { id: c4, num: 4, title: "稳定的部分" }
+  - { id: c5, num: 5, title: "变动的部分" }
+  - { id: c6, num: 6, title: "你考哪张卷" }
+  - { id: c7, num: 7, title: "错误示范" }
+  - { id: c8, num: 8, title: "三个维度" }
+  - { id: c9, num: 9, title: "性价比排序" }
+  - { id: c10, num: 10, title: "三阶段" }
+  - { id: c11, num: 11, title: "90 天分配" }
+  - { id: c12, num: 12, title: "每日两小时" }
+  - { id: c13, num: 13, title: "今天就开始" }
 ---
 
 import ArticleHero from "../../components/immersive/ArticleHero.astro";
-import ChapterStrip from "../../components/immersive/ChapterStrip.astro";
 import Chapter from "../../components/immersive/Chapter.astro";
 import Callout from "../../components/immersive/Callout.astro";
 import StatBar from "../../components/immersive/StatBar.astro";
@@ -17,30 +30,12 @@ import ActionList from "../../components/immersive/ActionList.astro";
 import QuizEmbed from "../../components/quiz/QuizEmbed.astro";
 import { getQuiz } from "../../lib/quizzes";
 
-export const chapters = [
-  { id: "c1", num: 1, title: "120 分钟 130 题" },
-  { id: "c2", num: 2, title: "题量地图" },
-  { id: "c3", num: 3, title: "2025 改革" },
-  { id: "c4", num: 4, title: "稳定的部分" },
-  { id: "c5", num: 5, title: "变动的部分" },
-  { id: "c6", num: 6, title: "你考哪张卷" },
-  { id: "c7", num: 7, title: "错误示范" },
-  { id: "c8", num: 8, title: "三个维度" },
-  { id: "c9", num: 9, title: "性价比排序" },
-  { id: "c10", num: 10, title: "三阶段" },
-  { id: "c11", num: 11, title: "90 天分配" },
-  { id: "c12", num: 12, title: "每日两小时" },
-  { id: "c13", num: 13, title: "今天就开始" },
-];
-
 export const qVerbal = getQuiz("1735356969485-36");
 export const qData = getQuiz("1735356969485-126");
 export const qLogic = getQuiz("1735356969485-86");
 export const qMath = getQuiz("1735356969485-66");
 
 <ArticleHero day={0} date="2026-09-07" readMinutes={35} title="在开始刷题之前：把这 130 道题拆开看" summary="占比告诉你考什么，但它不能告诉你该怎么分配时间——这两件事差得很远。" />
-
-<ChapterStrip items={chapters} />
 
 <Chapter id="c1" num={1} title="120 分钟 130 题：先感受节奏，再谈方法">
 

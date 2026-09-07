@@ -2,6 +2,8 @@
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import ImmersiveLayout from "../../layouts/ImmersiveLayout.astro";
+import PostShell from "../../components/immersive/PostShell.astro";
+import type { TocItem } from "../../lib/toc";
 
 export async function getStaticPaths() {
   const articles = await getCollection("articles");
@@ -9,37 +11,50 @@ export async function getStaticPaths() {
 }
 
 const { article } = Astro.props;
-const { Content } = await render(article);
-const { title, summary, day, topic, date, template, readMinutes } = article.data;
+const { title, summary, day, topic, date, template, readMinutes, chapters } = article.data;
+const { Content, headings } = await render(article);
+
+const chapterToc: TocItem[] =
+  chapters?.map((c) => ({ id: c.id, text: c.title, depth: 2 })) ?? [];
+const headingToc: TocItem[] = headings
+  .filter((h) => h.depth >= 2 && h.depth <= 3)
+  .map((h) => ({ id: h.slug, text: h.text, depth: h.depth }));
+const toc = chapterToc.length ? chapterToc : headingToc;
+
 const isImmersive = template === "immersive";
-const Layout = isImmersive ? ImmersiveLayout : BaseLayout;
 ---
 
 {
   isImmersive ? (
-    <ImmersiveLayout title={`Day ${day} · ${title}`} description={summary} day={day}>
+    <ImmersiveLayout
+      title={`Day ${day} · ${title}`}
+      description={summary}
+      day={day}
+      date={date}
+      topic={topic}
+      readMinutes={readMinutes}
+      toc={toc}
+    >
       <Content />
     </ImmersiveLayout>
   ) : (
     <BaseLayout title={`Day ${day} · ${title}`} description={summary}>
-      <article>
-        <header>
-          <div class="row">
-            <span class="meta day">Day {String(day).padStart(2, "0")}</span>
-            {topic && <span class="meta">{topic}</span>}
-            <span class="meta">{date.toISOString().slice(0, 10)}</span>
-            {readMinutes && <span class="meta">约 {readMinutes} 分钟</span>}
+      <PostShell date={date} day={day} topic={topic} readMinutes={readMinutes} toc={toc}>
+        <article>
+          <header>
+            <h1>{title}</h1>
+            <p class="lede">{summary}</p>
+          </header>
+          <div class="prose">
+            <Content />
           </div>
-          <h1>{title}</h1>
-          <p class="lede">{summary}</p>
-        </header>
-        <div class="prose">
-          <Content />
-        </div>
-        <footer class="checkin">
-          <button id="checkin" type="button" data-day={day}>标记今天已完成</button>
-        </footer>
-      </article>
+          <footer class="checkin">
+            <button id="checkin" type="button" data-day={day}>
+              标记今天已完成
+            </button>
+          </footer>
+        </article>
+      </PostShell>
     </BaseLayout>
   )
 }
@@ -69,14 +84,6 @@ const Layout = isImmersive ? ImmersiveLayout : BaseLayout;
   article {
     max-width: var(--w-text);
   }
-  .row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-  .day {
-    color: var(--accent);
-  }
   h1 {
     font-size: 2rem;
     margin: 0.6rem 0 1rem;
@@ -88,10 +95,12 @@ const Layout = isImmersive ? ImmersiveLayout : BaseLayout;
   .prose :global(h2) {
     font-size: 1.3rem;
     margin: 3rem 0 1rem;
+    scroll-margin-top: 4rem;
   }
   .prose :global(h3) {
     font-size: 1.05rem;
     margin: 2rem 0 0.75rem;
+    scroll-margin-top: 4rem;
   }
   .prose :global(li) {
     margin: 0.4rem 0;

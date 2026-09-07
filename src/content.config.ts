@@ -10,6 +10,12 @@ export const TOPICS = [
   "资料分析",
 ] as const;
 
+const chapter = z.object({
+  id: z.string(),
+  num: z.union([z.number(), z.string()]),
+  title: z.string(),
+});
+
 const articles = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/articles" }),
   schema: z.object({
@@ -21,6 +27,8 @@ const articles = defineCollection({
     date: z.coerce.date(),
     template: z.enum(["default", "immersive"]).default("default"),
     readMinutes: z.number().int().positive().optional(),
+    /** 沉浸式文章章节，供侧栏目录与 ChapterStrip 共用 */
+    chapters: z.array(chapter).optional(),
   }),
 });
 
