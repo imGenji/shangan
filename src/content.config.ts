@@ -1,6 +1,6 @@
 import { defineCollection, z } from "astro:content";
 import { glob } from "astro/loaders";
-import { SYLLABUS_TAG_SLUGS } from "../data/syllabus";
+import { SYLLABUS_TAG_SLUGS } from "./data/syllabus";
 
 /** 法考八大应试科目，学习计划按客观分值 + 主观权重分配天数 */
 export const SUBJECTS = [
