@@ -8,14 +8,16 @@ interface NavItem {
 interface Props {
   prev?: NavItem | null;
   next?: NavItem | null;
+  /** top=文首默认；bottom=打卡下方 */
+  variant?: "top" | "bottom";
 }
 
-const { prev = null, next = null } = Astro.props;
+const { prev = null, next = null, variant = "top" } = Astro.props;
 ---
 
 {
   (prev || next) && (
-    <nav class="article-nav" aria-label="文章导航">
+    <nav class:list={["article-nav", variant === "bottom" && "foot"]} aria-label="文章导航">
       {prev ? (
         <a class="link prev" href={prev.href}>
           <span class="meta dir">← 上一篇</span>
@@ -94,5 +96,11 @@ const { prev = null, next = null } = Astro.props;
       text-align: left;
       align-items: flex-start;
     }
+  }
+  .article-nav.foot {
+    margin: 2.5rem 0 0;
+    padding: 1.25rem 0 0;
+    border-bottom: none;
+    border-top: 1px solid var(--c-border);
   }
 </style>

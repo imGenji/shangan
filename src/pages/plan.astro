@@ -107,28 +107,35 @@ const learningArticles = articles.filter((a) => a.data.day > 0);
 
   applyFilter();
 
-  let done = [];
-  try {
-    const raw = JSON.parse(localStorage.getItem("checkins") ?? "[]");
-    done = raw.map((x) => (typeof x === "number" ? x : x.day));
-  } catch {
-    done = [];
-  }
-  document.querySelectorAll("[data-list] li").forEach((li) => {
-    if (!done.includes(Number(li.dataset.day))) return;
-    li.dataset.done = "true";
-    const tagEl = li.querySelector(".done-tag");
-    if (tagEl) tagEl.hidden = false;
-  });
+  function paintPlanProgress() {
+    let done = [];
+    try {
+      const raw = JSON.parse(localStorage.getItem("checkins") ?? "[]");
+      done = raw.map((x) => (typeof x === "number" ? x : x.day));
+    } catch {
+      done = [];
+    }
+    document.querySelectorAll("[data-list] li").forEach((li) => {
+      li.removeAttribute("data-done");
+      const tagEl = li.querySelector(".done-tag");
+      if (tagEl) tagEl.hidden = true;
+      if (!done.includes(Number(li.dataset.day))) return;
+      li.dataset.done = "true";
+      if (tagEl) tagEl.hidden = false;
+    });
 
-  // 无筛选时滚动到「学到哪了」：已完成最高篇，新用户为第 0 篇
-  const scrollDay = done.length ? Math.max(...done.map(Number)) : 0;
-  if (!topic && !tag) {
-    const target = document.querySelector(`[data-list] li[data-day="${scrollDay}"]`);
-    if (target) {
-      requestAnimationFrame(() => target.scrollIntoView({ block: "center", behavior: "instant" }));
+    const scrollDay = done.length ? Math.max(...done.map(Number)) : 0;
+    if (!topic && !tag) {
+      const target = document.querySelector(`[data-list] li[data-day="${scrollDay}"]`);
+      if (target) {
+        requestAnimationFrame(() => target.scrollIntoView({ block: "center", behavior: "instant" }));
+      }
     }
   }
+
+  paintPlanProgress();
+  window.addEventListener("pageshow", () => paintPlanProgress());
+  window.addEventListener("activity-change", () => paintPlanProgress());
 </script>
 
 <style>

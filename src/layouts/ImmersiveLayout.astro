@@ -36,6 +36,7 @@ const { title, description, day, date, topic, tags = [], readMinutes, toc = [], 
     <article class="immersive">
       <slot />
       {day !== undefined && <CheckIn day={day} />}
+      <ArticleNav prev={prev} next={next} variant="bottom" />
     </article>
   </PostShell>
 </BaseLayout>
