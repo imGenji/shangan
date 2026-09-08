@@ -1,0 +1,228 @@
+---
+import { OBJECTIVE_TOTAL, SYLLABUS_SUBJECTS } from "../../data/syllabus";
+import { planTagUrl, planTopicUrl } from "../../lib/tags";
+
+interface Props {
+  publishedTags?: Set<string>;
+  publishedTopics?: Set<string>;
+}
+
+const { publishedTags = new Set(), publishedTopics = new Set() } = Astro.props;
+
+const subjects = [...SYLLABUS_SUBJECTS].sort((a, b) => b.objective - a.objective);
+const peak = subjects[0]?.objective ?? 1;
+---
+
+<section class="tree-wrap" aria-labelledby="tree-title">
+  <h3 id="tree-title" class="cap meta">大纲树 · 八科考点脉络</h3>
+
+  <div class="tree-root">
+    <p class="root-label">
+      <span class="root-name">法考</span>
+      <span class="root-meta meta">客观 {OBJECTIVE_TOTAL} 分 · {subjects.length} 科</span>
+    </p>
+
+    <ol class="tree">
+      {
+        subjects.map((s) => {
+          const topicLive = publishedTopics.has(s.name);
+          return (
+            <li class="branch" style={`--h:${s.hue}`}>
+              <div class="branch-head">
+                {
+                  topicLive ? (
+                    <a class="branch-name" href={planTopicUrl(s.name)}>{s.name}</a>
+                  ) : (
+                    <span class="branch-name">{s.name}</span>
+                  )
+                }
+                <span class="branch-scores meta">
+                  客 <strong>{s.objective}</strong>
+                  {s.subjective != null ? (
+                    <>
+                      {" "}
+                      · 主 <strong>{s.subjective}</strong>
+                    </>
+                  ) : (
+                    " · 主 —"
+                  )}
+                </span>
+                <span class="branch-bar" aria-hidden="true">
+                  <i style={`width:${(s.objective / peak) * 100}%`} />
+                </span>
+              </div>
+              {s.note && <p class="branch-note meta">{s.note}</p>}
+              <ul class="topics">
+                {s.topics.map((t) => (
+                  <li>
+                    {
+                      publishedTags.has(t.slug) ? (
+                        <a class="topic-link" href={planTagUrl(t.slug)}>{t.label}</a>
+                      ) : (
+                        <span class="topic-idle">{t.label}</span>
+                      )
+                    }
+                  </li>
+                ))}
+              </ul>
+            </li>
+          );
+        })
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  .tree-wrap {
+    margin: 0;
+  }
+  .cap {
+    margin: 0 0 0.75rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--c-text-dim);
+  }
+
+  .tree-root {
+    border: 1px solid var(--c-border);
+    border-radius: 3px;
+    padding: 1rem 1.1rem 1.1rem;
+    background: color-mix(in srgb, var(--paper) 98%, var(--accent));
+  }
+  .root-label {
+    margin: 0 0 1rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--c-border);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 0.85rem;
+  }
+  .root-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .root-meta {
+    font-size: 0.78rem;
+  }
+
+  .tree {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0;
+  }
+  .branch {
+    position: relative;
+    padding: 0.85rem 0 0.85rem 1.15rem;
+    border-bottom: 1px solid var(--c-border);
+  }
+  .branch:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+  .branch::before {
+    content: "";
+    position: absolute;
+    left: 0.35rem;
+    top: 1.35rem;
+    bottom: 0;
+    width: 1px;
+    background: color-mix(in srgb, hsl(var(--h) 38% 52%) 45%, var(--c-border));
+  }
+  .branch:last-child::before {
+    bottom: auto;
+    height: 0.5rem;
+  }
+  .branch::after {
+    content: "";
+    position: absolute;
+    left: 0.35rem;
+    top: 1.35rem;
+    width: 0.55rem;
+    height: 1px;
+    background: color-mix(in srgb, hsl(var(--h) 38% 52%) 55%, var(--c-border));
+  }
+
+  .branch-head {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    gap: 0.15rem 0.75rem;
+    align-items: center;
+  }
+  .branch-name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--c-text);
+    grid-row: 1 / 3;
+    text-decoration: none;
+  }
+  a.branch-name:hover {
+    color: color-mix(in srgb, hsl(var(--h) 42% 46%) 75%, var(--accent));
+  }
+  .branch-scores {
+    font-size: 0.72rem;
+    justify-self: end;
+  }
+  .branch-scores strong {
+    color: color-mix(in srgb, hsl(var(--h) 42% 46%) 80%, var(--accent));
+    font-family: var(--font-mono);
+    font-weight: 600;
+  }
+  .branch-bar {
+    grid-column: 2;
+    height: 3px;
+    background: var(--c-border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .branch-bar i {
+    display: block;
+    height: 100%;
+    background: color-mix(in srgb, hsl(var(--h) 42% 46%) 65%, var(--accent));
+    border-radius: 2px;
+  }
+
+  .branch-note {
+    margin: 0.35rem 0 0.5rem;
+    font-size: 0.72rem;
+    color: var(--copper);
+    line-height: 1.5;
+  }
+
+  .topics {
+    list-style: none;
+    margin: 0.35rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.4rem;
+  }
+  .topic-link,
+  .topic-idle {
+    display: block;
+    font-size: 0.78rem;
+    padding: 0.18rem 0.5rem;
+    border: 1px solid var(--c-border);
+    border-radius: 2px;
+    background: var(--paper);
+  }
+  .topic-link {
+    color: var(--c-text-muted);
+    text-decoration: none;
+  }
+  .topic-link:hover {
+    color: color-mix(in srgb, hsl(var(--h) 42% 46%) 75%, var(--accent));
+    border-color: color-mix(in srgb, hsl(var(--h) 38% 52%) 40%, var(--c-border));
+  }
+  .topic-idle {
+    color: var(--c-text-dim);
+    opacity: 0.72;
+    cursor: default;
+  }
+</style>

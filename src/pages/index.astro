@@ -1,80 +1,444 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import Module from "../components/home/Module.astro";
+import ActivityHeatmap from "../components/home/ActivityHeatmap.astro";
+import SyllabusOutline from "../components/home/SyllabusOutline.astro";
 import { withBase } from "../lib/base";
+import { publishedTagSlugs, publishedTopics } from "../lib/article-tags";
+import { MAXIMS, maximOfDay } from "../data/maxims";
+import { PLANNED_ARTICLES, articleLabel } from "../data/plan";
 
 const articles = (await getCollection("articles")).sort((a, b) => a.data.day - b.data.day);
+const learningArticles = articles.filter((a) => a.data.day > 0);
+const EXAM = new Date("2027-09-11");
+const EXAM_SUBJECTIVE = new Date("2027-10-17");
+const daysLeft = Math.max(0, Math.ceil((EXAM.getTime() - Date.now()) / 86_400_000));
+const daysLeftSub = Math.max(0, Math.ceil((EXAM_SUBJECTIVE.getTime() - Date.now()) / 86_400_000));
+
+const fallback = maximOfDay(0);
+const articleIndex = articles.map((a) => ({
+  day: a.data.day,
+  id: a.id,
+  title: a.data.title,
+  topic: a.data.topic ?? "",
+  scope: a.data.scope ?? "",
+  readMinutes: a.data.readMinutes ?? 0,
+  href: withBase(`articles/${a.id}/`),
+  label: articleLabel(a.data.day),
+}));
 ---
 
-<BaseLayout title="备考笔记 · 省考行测">
-  <section class="intro">
-    <p class="meta">省考行测 · 90 天计划</p>
-    <h1>按真题占比排的学习顺序</h1>
-    <p class="lede">
-      每天一篇，一篇只讲透一个考点。天数是按近十年真题里各题型的实际占比分配的，考得多的多花几天，不平均用力。
+<BaseLayout title="2027 法考">
+  <header class="hero-maxim" data-maxim aria-label="每日金句">
+    <div class="hero-maxim__main" data-maxim-main tabindex="0" data-translation={fallback.translation}>
+      <blockquote class="hero-maxim__quote" data-maxim-text>{fallback.text}</blockquote>
+    </div>
+    <p class="hero-maxim__foot meta">
+      <span class="hero-maxim__tag" data-maxim-tag>{fallback.tag ?? "金句"}</span>
+      <span class="hero-maxim__sep" aria-hidden="true">·</span>
+      <span class="hero-maxim__from" data-maxim-from>{fallback.from}</span>
+      <span class="hero-maxim__sep" aria-hidden="true">·</span>
+      <button type="button" class="hero-maxim__refresh" id="maxim-refresh" aria-label="换一句">换一句</button>
     </p>
-  </section>
+    <div class="hero-maxim-tip" data-maxim-tip hidden>
+      <p class="hero-maxim-tip-text" data-maxim-tip-text></p>
+    </div>
+  </header>
 
-  <ol class="list">
-    {
-      articles.map((a) => (
-        <li>
-          <a href={withBase(`articles/${a.id}/`)}>
-            <div class="row">
-              <span class="meta day">Day {String(a.data.day).padStart(2, "0")}</span>
-              {a.data.topic && <span class="meta">{a.data.topic}</span>}
-              {a.data.readMinutes && <span class="meta">约 {a.data.readMinutes} 分钟</span>}
-            </div>
-            <h2>{a.data.title}</h2>
-            <p>{a.data.summary}</p>
+  <p class="countdown-bar meta">
+    2027 法考 · 客观题 <strong data-days-left>{daysLeft}</strong> 天 · 主观题 <strong>{daysLeftSub}</strong> 天
+    <span class="countdown-sub">（09-11 / 10-17 估 · {PLANNED_ARTICLES} 篇精讲）</span>
+  </p>
+
+  <ActivityHeatmap />
+
+  <div class="dashboard">
+    <div class="dashboard-row">
+      <Module title="学到哪了" hint="STUDY · PROGRESS">
+        <div class="study" data-study>
+          <p class="study-status meta" data-study-status>读取进度中…</p>
+          <a class="study-cta" data-study-link href={withBase(`articles/${articles[0]?.id ?? "day-00-plan"}/`)}>
+            开始阅读 →
           </a>
-        </li>
-      ))
-    }
-  </ol>
+          <div class="study-bar"><i data-study-bar></i></div>
+          <p class="study-meta meta" data-study-meta></p>
+        </div>
+      </Module>
+
+      <Module title="错题本" hint="MISTAKES · SOON">
+        <div class="placeholder">
+          <p>后续版本：做错的题自动收录，按艾宾浩斯曲线提醒复习。</p>
+          <p class="meta soon">开发中</p>
+        </div>
+      </Module>
+    </div>
+
+    <div class="dashboard-plan">
+    <Module
+      title="文章目录"
+      hint={`${learningArticles.length} / ${PLANNED_ARTICLES} 篇`}
+      href={withBase("plan/")}
+      linkLabel="全部文章 →"
+    >
+      <div class="preview-scroll" data-preview-scroll>
+        <ol class="preview">
+          {
+            articles.map((a) => (
+              <li data-day={a.data.day}>
+                <a href={withBase(`articles/${a.id}/`)}>
+                  <span class="num">
+                    <svg class="done-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+                      <path d="M4 12.5 L9.5 18 L20 6.5" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span class="num-text">{a.data.day === 0 ? "—" : String(a.data.day).padStart(2, "0")}</span>
+                  </span>
+                  <span class="title">{a.data.title}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </Module>
+    </div>
+
+    <Module title="备考大纲" hint="SYLLABUS · 300 分">
+      <SyllabusOutline
+        publishedTags={publishedTagSlugs(articles)}
+        publishedTopics={publishedTopics(articles)}
+      />
+    </Module>
+  </div>
 </BaseLayout>
 
+<script define:vars={{ MAXIMS, articleIndex, PLANNED_ARTICLES }} is:inline>
+  function pickMaxim() {
+    return MAXIMS[Math.floor(Math.random() * MAXIMS.length)];
+  }
+  function paintMaxim(m) {
+    const main = document.querySelector("[data-maxim-main]");
+    const t = document.querySelector("[data-maxim-text]");
+    const f = document.querySelector("[data-maxim-from]");
+    const tag = document.querySelector("[data-maxim-tag]");
+    const tip = document.querySelector("[data-maxim-tip]");
+    if (t) t.textContent = m.text;
+    if (main) main.dataset.translation = m.translation || "";
+    if (f) f.textContent = m.from;
+    if (tag) tag.textContent = m.tag || "金句";
+    if (tip) tip.hidden = true;
+  }
+  function setupMaximTip() {
+    const main = document.querySelector("[data-maxim-main]");
+    const tip = document.querySelector("[data-maxim-tip]");
+    const tipText = document.querySelector("[data-maxim-tip-text]");
+    if (!main || !tip || !tipText) return;
+
+    const place = () => {
+      const r = main.getBoundingClientRect();
+      tip.style.left = r.left + r.width / 2 + "px";
+      tip.style.top = r.top - 6 + "px";
+    };
+    const show = () => {
+      const trans = main.dataset.translation;
+      if (!trans) return;
+      tipText.textContent = trans;
+      tip.hidden = false;
+      place();
+    };
+    const hide = () => {
+      tip.hidden = true;
+    };
+
+    main.addEventListener("mouseenter", show);
+    main.addEventListener("mouseleave", hide);
+    main.addEventListener("focusin", show);
+    main.addEventListener("focusout", hide);
+    window.addEventListener("scroll", () => { if (!tip.hidden) place(); }, true);
+  }
+  paintMaxim(pickMaxim());
+  setupMaximTip();
+  document.getElementById("maxim-refresh")?.addEventListener("click", () => paintMaxim(pickMaxim()));
+
+  let checkinsRaw = [];
+  try {
+    checkinsRaw = JSON.parse(localStorage.getItem("checkins") || "[]");
+  } catch (_) {}
+  const checkins = checkinsRaw.map((x) => (typeof x === "number" ? x : x.day));
+  const doneSet = new Set(checkins.map(Number));
+  const counted = checkins.filter((d) => d > 0).length;
+  const pct = PLANNED_ARTICLES ? Math.min(100, (counted / PLANNED_ARTICLES) * 100) : 0;
+
+  const sorted = [...articleIndex].sort((a, b) => a.day - b.day);
+  const next =
+    sorted.find((a) => a.day > 0 && !doneSet.has(a.day)) ||
+    sorted.find((a) => a.day === 0 && !doneSet.has(0)) ||
+    sorted[sorted.length - 1];
+
+  const lastDoneDay = checkins.filter((d) => d > 0).sort((a, b) => b - a)[0];
+  const lastArticle = lastDoneDay != null ? sorted.find((a) => a.day === lastDoneDay) : null;
+
+  const statusEl = document.querySelector("[data-study-status]");
+  const linkEl = document.querySelector("[data-study-link]");
+  const barEl = document.querySelector("[data-study-bar]");
+  const metaEl = document.querySelector("[data-study-meta]");
+
+  const fmt = (a) => (a.day === 0 ? "总览" : `第 ${String(a.day).padStart(2, "0")} 篇`);
+
+  if (statusEl && next) {
+    if (counted === 0) {
+      statusEl.textContent = "尚未打卡 · 建议从总览读起";
+    } else if (lastArticle && next.day !== lastArticle.day) {
+      statusEl.textContent = `上次完成 ${fmt(lastArticle)} · 下一篇 ${fmt(next)}`;
+    } else if (doneSet.has(next.day)) {
+      statusEl.textContent = `${fmt(next)} 已完成 · 可复习或继续下一篇`;
+    } else {
+      statusEl.textContent = `继续 ${fmt(next)}${next.topic ? " · " + next.topic : ""}`;
+    }
+  }
+  if (linkEl && next) {
+    linkEl.href = next.href;
+    linkEl.textContent =
+      next.day === 0 ? "阅读总览 →" : `${fmt(next)} · ${next.title.slice(0, 18)}${next.title.length > 18 ? "…" : ""} →`;
+  }
+  if (barEl) barEl.style.width = pct + "%";
+  if (metaEl) metaEl.textContent = `已完成 ${counted} / ${PLANNED_ARTICLES} 篇 · ${pct.toFixed(1)}%`;
+
+  document.querySelectorAll(".preview li").forEach((li) => {
+    const day = Number(li.dataset.day);
+    if (doneSet.has(day)) li.dataset.done = "true";
+    if (next && day === next.day) li.dataset.current = "true";
+  });
+
+  const scrollEl = document.querySelector("[data-preview-scroll]");
+  const currentEl = scrollEl?.querySelector('[data-current="true"]');
+  if (scrollEl && currentEl) {
+    const top = currentEl.offsetTop - (scrollEl.clientHeight - currentEl.offsetHeight) / 2;
+    scrollEl.scrollTop = Math.max(0, top);
+  }
+</script>
+
 <style>
-  .intro {
-    max-width: var(--w-text);
-    margin-bottom: 3.5rem;
+  .countdown-bar {
+    margin: 0 0 2rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--c-border);
+    color: var(--c-text-dim);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    line-height: 1.6;
   }
-  .intro h1 {
-    font-size: 2rem;
-    margin: 0.5rem 0 1rem;
+  .countdown-bar strong {
+    color: var(--copper);
+    font-weight: 600;
   }
-  .lede {
-    color: var(--c-text-muted);
+  .countdown-sub {
+    color: var(--c-text-dim);
+    opacity: 0.85;
+  }
+
+  .hero-maxim {
+    position: relative;
+    margin: 0 0 2rem;
+    width: 100%;
+  }
+  .hero-maxim__main {
+    width: 100%;
+    cursor: default;
+  }
+  .hero-maxim__main:focus {
+    outline: none;
+  }
+  .hero-maxim__main:focus-visible .hero-maxim__quote {
+    outline: 1px solid var(--accent-soft);
+    outline-offset: 4px;
+  }
+  .hero-maxim__quote {
     margin: 0;
+    padding: 0;
+    border: 0;
+    font-family: var(--serif);
+    font-size: clamp(1.2rem, 2.4vw, 1.65rem);
+    font-weight: 500;
+    line-height: 1.75;
+    letter-spacing: 0.06em;
+    color: var(--c-text);
+    width: 100%;
   }
-  .list {
+  .hero-maxim-tip {
+    position: fixed;
+    z-index: 40;
+    transform: translate(-50%, -100%);
+    pointer-events: none;
+    max-width: min(24rem, calc(100vw - 2rem));
+    padding: 0.5rem 0.7rem;
+    background: var(--paper);
+    border: 1px solid var(--c-border-light);
+    border-radius: 3px;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--c-text) 8%, transparent);
+  }
+  .hero-maxim-tip-text {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.65;
+    color: var(--c-text-muted);
+  }
+  .hero-maxim__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.45rem;
+    margin: 1.1rem 0 0;
+    color: var(--c-text-dim);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+  }
+  .hero-maxim__tag { color: var(--copper); }
+  .hero-maxim__sep { opacity: 0.4; user-select: none; }
+  .hero-maxim__refresh {
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    font: inherit;
+    color: var(--c-text-dim);
+  }
+  .hero-maxim__refresh::before { content: "另 "; opacity: 0.65; }
+  .hero-maxim__refresh:hover { color: var(--accent); }
+
+  .dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: var(--w-page);
+  }
+  .dashboard-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+  .dashboard-plan {
+    width: 100%;
+  }
+  @media (max-width: 720px) {
+    .dashboard-row { grid-template-columns: 1fr; }
+  }
+
+  .study-status {
+    margin: 0 0 1rem;
+    color: var(--accent);
+    line-height: 1.6;
+  }
+  .study-cta {
+    display: inline-block;
+    margin-bottom: 1.25rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--c-text);
+    border-bottom: 1px solid var(--c-border-light);
+    padding-bottom: 0.15rem;
+  }
+  .study-cta:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .study-bar {
+    height: 4px;
+    background: var(--c-border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+  }
+  .study-bar i {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--good);
+    transition: width 0.5s ease;
+  }
+  .study-meta { margin: 0; color: var(--c-text-dim); }
+
+  .placeholder p {
+    margin: 0 0 0.65rem;
+    color: var(--c-text-muted);
+    font-size: 0.92rem;
+    line-height: 1.7;
+  }
+  .soon { color: var(--copper); margin: 0; }
+
+  .preview-scroll {
+    max-height: min(22rem, 50vh);
+    overflow-y: auto;
+    margin: 0 -0.35rem;
+    padding: 0 0.35rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--c-border) transparent;
+  }
+  .preview {
     list-style: none;
     margin: 0;
     padding: 0;
-    max-width: var(--w-text);
   }
-  .list li {
-    border-top: 1px solid var(--c-border);
+  .preview li {
+    border-bottom: 1px solid var(--c-border);
   }
-  .list a {
-    display: block;
-    padding: 1.5rem 0;
+  .preview a {
+    display: grid;
+    grid-template-columns: 2.4rem 1fr;
+    gap: 0.55rem;
+    align-items: center;
+    padding: 0.65rem 0;
     text-decoration: none;
+    color: inherit;
   }
-  .row {
-    display: flex;
-    gap: 1rem;
-  }
-  .day {
+  .preview a:hover .title { color: var(--accent); }
+  .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 1.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
     color: var(--accent);
   }
-  .list h2 {
-    font-size: 1.15rem;
-    margin: 0.4rem 0 0.5rem;
+  .done-mark {
+    display: none;
+    width: 1rem;
+    height: 1rem;
+    color: var(--good);
   }
-  .list p {
-    margin: 0;
+  .preview li[data-done="true"] .done-mark { display: block; }
+  .preview li[data-done="true"] .num-text { display: none; }
+  .preview li[data-done="true"] .title {
+    color: var(--c-text-dim);
+  }
+  .preview li[data-done="true"] a {
+    background: color-mix(in srgb, var(--good-pale) 55%, transparent);
+    margin: 0 -0.35rem;
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
+    border-radius: 2px;
+  }
+  .preview li[data-current="true"] a {
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    margin: 0 -0.35rem;
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
+    border-radius: 2px;
+  }
+  .preview li[data-current="true"] .title {
+    color: var(--c-text);
+    font-weight: 500;
+  }
+  .preview li[data-current="true"] .num-text {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .preview .title {
+    font-size: 0.88rem;
+    line-height: 1.5;
     color: var(--c-text-muted);
-    font-size: 0.94rem;
   }
 </style>

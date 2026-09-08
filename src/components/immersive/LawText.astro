@@ -1,0 +1,76 @@
+---
+/** 法条原文独立卡片：与 Callout 区分，专用于可背诵的条文 */
+interface Props {
+  law?: string;
+  article: string;
+  note?: string;
+}
+
+const { law = "《民法典》", article, note } = Astro.props;
+---
+
+<figure class="law-text">
+  <figcaption class="law-text-head">
+    <span class="badge meta">法律原文</span>
+    <cite class="ref">{law} {article}</cite>
+  </figcaption>
+  <blockquote class="law-text-body">
+    <slot />
+  </blockquote>
+  {note && <p class="law-text-note meta">{note}</p>}
+</figure>
+
+<style>
+  .law-text {
+    margin: 1.75rem 0;
+    padding: 0;
+    border: 1px solid var(--c-border-light);
+    border-radius: 4px;
+    background: var(--paper-2);
+    overflow: hidden;
+  }
+  .law-text-head {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 0;
+    padding: 0.55rem 1rem;
+    background: color-mix(in srgb, var(--accent) 6%, var(--paper));
+    border-bottom: 1px solid var(--c-border);
+  }
+  .badge {
+    color: var(--accent);
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .ref {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    font-style: normal;
+    color: var(--c-text-muted);
+    letter-spacing: 0.04em;
+  }
+  .law-text-body {
+    margin: 0;
+    padding: 1rem 1.15rem 1.05rem;
+    border: 0;
+    font-family: var(--serif);
+    font-size: 1.02rem;
+    line-height: 1.95;
+    letter-spacing: 0.04em;
+    color: var(--c-text);
+  }
+  .law-text-body :global(p) {
+    margin: 0;
+  }
+  .law-text-note {
+    margin: 0;
+    padding: 0.5rem 1rem 0.75rem;
+    color: var(--c-text-dim);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    border-top: 1px dashed var(--c-border);
+  }
+</style>

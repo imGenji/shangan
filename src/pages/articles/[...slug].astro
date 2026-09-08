@@ -3,7 +3,10 @@ import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import ImmersiveLayout from "../../layouts/ImmersiveLayout.astro";
 import PostShell from "../../components/immersive/PostShell.astro";
+import CheckIn from "../../components/immersive/CheckIn.astro";
 import type { TocItem } from "../../lib/toc";
+import { articleLabel } from "../../data/plan";
+import { withBase } from "../../lib/base";
 
 export async function getStaticPaths() {
   const articles = await getCollection("articles");
@@ -11,7 +14,7 @@ export async function getStaticPaths() {
 }
 
 const { article } = Astro.props;
-const { title, summary, day, topic, date, template, readMinutes, chapters } = article.data;
+const { title, summary, day, topic, tags, date, template, readMinutes, chapters } = article.data;
 const { Content, headings } = await render(article);
 
 const chapterToc: TocItem[] =
@@ -22,24 +25,39 @@ const headingToc: TocItem[] = headings
 const toc = chapterToc.length ? chapterToc : headingToc;
 
 const isImmersive = template === "immersive";
+const pageTitle = `${articleLabel(day)} · ${title}`;
+
+const allArticles = (await getCollection("articles")).sort((a, b) => a.data.day - b.data.day);
+const idx = allArticles.findIndex((a) => a.id === article.id);
+const prevArticle = idx > 0 ? allArticles[idx - 1] : null;
+const nextArticle = idx >= 0 && idx < allArticles.length - 1 ? allArticles[idx + 1] : null;
+
+const toNav = (a: (typeof allArticles)[number]) => ({
+  href: withBase(`articles/${a.id}/`),
+  label: articleLabel(a.data.day),
+  title: a.data.title,
+});
 ---
 
 {
   isImmersive ? (
     <ImmersiveLayout
-      title={`Day ${day} · ${title}`}
+      title={pageTitle}
       description={summary}
       day={day}
       date={date}
       topic={topic}
+      tags={tags}
       readMinutes={readMinutes}
       toc={toc}
+      prev={prevArticle ? toNav(prevArticle) : null}
+      next={nextArticle ? toNav(nextArticle) : null}
     >
       <Content />
     </ImmersiveLayout>
   ) : (
-    <BaseLayout title={`Day ${day} · ${title}`} description={summary}>
-      <PostShell date={date} day={day} topic={topic} readMinutes={readMinutes} toc={toc}>
+    <BaseLayout title={pageTitle} description={summary}>
+      <PostShell date={date} day={day} topic={topic} tags={tags} readMinutes={readMinutes} toc={toc}>
         <article>
           <header>
             <h1>{title}</h1>
@@ -48,37 +66,12 @@ const isImmersive = template === "immersive";
           <div class="prose">
             <Content />
           </div>
-          <footer class="checkin">
-            <button id="checkin" type="button" data-day={day}>
-              标记今天已完成
-            </button>
-          </footer>
+          <CheckIn day={day} />
         </article>
       </PostShell>
     </BaseLayout>
   )
 }
-
-<script>
-  const btn = document.getElementById("checkin") as HTMLButtonElement | null;
-  if (btn) {
-    const day = Number(btn.dataset.day);
-    const KEY = "checkins";
-    const read = (): number[] => JSON.parse(localStorage.getItem(KEY) ?? "[]");
-    const paint = () => {
-      const done = read().includes(day);
-      btn.textContent = done ? "已完成 · 点击撤销" : "标记今天已完成";
-      btn.dataset.done = String(done);
-    };
-    btn.addEventListener("click", () => {
-      const days = read();
-      const next = days.includes(day) ? days.filter((d) => d !== day) : [...days, day];
-      localStorage.setItem(KEY, JSON.stringify(next.sort((a, b) => a - b)));
-      paint();
-    });
-    paint();
-  }
-</script>
 
 <style>
   article {
@@ -104,25 +97,5 @@ const isImmersive = template === "immersive";
   }
   .prose :global(li) {
     margin: 0.4rem 0;
-  }
-  .checkin {
-    margin-top: 4rem;
-    padding-top: 2rem;
-    border-top: 1px solid var(--c-border);
-  }
-  #checkin {
-    background: none;
-    border: 1px solid var(--c-border-light);
-    border-radius: 6px;
-    color: var(--c-text);
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.9rem;
-    padding: 0.55rem 1.1rem;
-  }
-  #checkin:hover,
-  #checkin[data-done="true"] {
-    border-color: var(--accent);
-    color: var(--accent);
   }
 </style>

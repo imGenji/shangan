@@ -1,0 +1,98 @@
+---
+interface NavItem {
+  href: string;
+  label: string;
+  title: string;
+}
+
+interface Props {
+  prev?: NavItem | null;
+  next?: NavItem | null;
+}
+
+const { prev = null, next = null } = Astro.props;
+---
+
+{
+  (prev || next) && (
+    <nav class="article-nav" aria-label="文章导航">
+      {prev ? (
+        <a class="link prev" href={prev.href}>
+          <span class="meta dir">← 上一篇</span>
+          <span class="label">{prev.label}</span>
+          <span class="title">{prev.title}</span>
+        </a>
+      ) : (
+        <span class="link empty" aria-hidden="true" />
+      )}
+      {next ? (
+        <a class="link next" href={next.href}>
+          <span class="meta dir">下一篇 →</span>
+          <span class="label">{next.label}</span>
+          <span class="title">{next.title}</span>
+        </a>
+      ) : (
+        <span class="link empty" aria-hidden="true" />
+      )}
+    </nav>
+  )
+}
+
+<style>
+  .article-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 0 0 2rem;
+    padding: 0.65rem 0 0.75rem;
+    border-bottom: 1px solid var(--c-border);
+  }
+  .link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+    text-decoration: none;
+    color: inherit;
+    transition: color 0.12s;
+  }
+  .link:hover .title {
+    color: var(--accent);
+  }
+  .link.next {
+    text-align: right;
+    align-items: flex-end;
+  }
+  .empty {
+    display: block;
+  }
+  .dir {
+    color: var(--c-text-dim);
+    font-size: 0.68rem;
+  }
+  .label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+  }
+  .title {
+    font-size: 0.82rem;
+    color: var(--c-text-muted);
+    line-height: 1.45;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+  @media (max-width: 640px) {
+    .article-nav {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+    .link.next {
+      text-align: left;
+      align-items: flex-start;
+    }
+  }
+</style>

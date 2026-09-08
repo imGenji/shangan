@@ -1,0 +1,32 @@
+/* 沉浸式正文考点强调：淡底 + 下划线，多行时每行独立包裹（仿 ursb 标记笔） */
+:root {
+  --mark-bg: color-mix(in srgb, var(--good) 14%, var(--paper));
+  --mark-line: var(--good);
+}
+
+[data-mode="dark"] {
+  --mark-bg: color-mix(in srgb, var(--good) 20%, var(--paper));
+}
+
+.immersive .chap-body :global(p:not(.law-lead) strong),
+.immersive .callout-body :global(strong),
+.immersive .chap-body :global(li strong),
+.immersive :global(.key-mark) {
+  background: var(--mark-bg);
+  color: var(--c-text);
+  font-weight: 600;
+  padding: 0.06em 0.2em 0.02em;
+  border-bottom: 2px solid var(--mark-line);
+  border-radius: 2px 2px 0 0;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* 法条引述行：仅段首条号铜色，句内考点仍走荧光标记 */
+.immersive .chap-body :global(p.law-lead > strong) {
+  background: none;
+  border-bottom: none;
+  padding: 0;
+  color: var(--copper);
+  font-weight: 700;
+}

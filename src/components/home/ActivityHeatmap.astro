@@ -1,0 +1,239 @@
+---
+/** ursb 式活跃度：53 周 × 7 行，撑满一行 + 悬停详情 */
+const WEEKS = 53;
+const ROWS = 7;
+---
+
+<section class="activity" aria-label="学习活跃度">
+  <div class="activity-head">
+    <p class="meta activity-label">活跃度</p>
+    <p class="activity-summary meta" data-activity-summary>过去 {WEEKS} 周 · 读取中…</p>
+  </div>
+  <div class="activity-grid" data-activity-grid data-weeks={WEEKS} role="img" aria-label={`过去 ${WEEKS} 周学习记录`}>
+    {
+      Array.from({ length: WEEKS }, (_, w) => (
+        <div class="activity-week">
+          {
+            Array.from({ length: ROWS }, (_, d) => (
+              <span class="activity-cell" data-level="0" data-idx={w * ROWS + d} tabindex="0"></span>
+            ))
+          }
+        </div>
+      ))
+    }
+  </div>
+  <div class="activity-foot meta">
+    <div class="activity-legend">
+      <span>少</span>
+      <span class="activity-cell" data-level="0" aria-hidden="true"></span>
+      <span class="activity-cell" data-level="1" aria-hidden="true"></span>
+      <span class="activity-cell" data-level="2" aria-hidden="true"></span>
+      <span class="activity-cell" data-level="3" aria-hidden="true"></span>
+      <span class="activity-cell" data-level="4" aria-hidden="true"></span>
+      <span>多</span>
+    </div>
+  </div>
+  <div class="activity-tip" data-activity-tip hidden>
+    <p class="activity-tip-date" data-tip-date></p>
+    <p class="activity-tip-detail" data-tip-detail></p>
+  </div>
+</section>
+
+<script>
+  import {
+    activeDayCountInWeeks,
+    buildHeatmapWeeks,
+    readCheckins,
+  } from "../../lib/activity";
+
+  function fmtDate(iso: string) {
+    const d = new Date(`${iso}T12:00:00`);
+    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 周${"日一二三四五六"[d.getDay()]}`;
+  }
+
+  function paint() {
+    const grid = document.querySelector("[data-activity-grid]");
+    const summary = document.querySelector("[data-activity-summary]");
+    if (!grid) return;
+
+    readCheckins();
+
+    const weeks = Number(grid.dataset.weeks) || 53;
+    const cells = buildHeatmapWeeks(weeks);
+    grid.querySelectorAll(".activity-cell[data-idx]").forEach((dot, i) => {
+      const cell = cells[i];
+      if (!cell) return;
+      dot.dataset.level = String(cell.level);
+      dot.dataset.date = cell.date;
+      dot.dataset.dateLabel = fmtDate(cell.date);
+      dot.dataset.detail = cell.level > 0 ? cell.label.split(" · ").slice(1).join(" · ") : "无记录";
+    });
+
+    if (summary) {
+      summary.textContent = `过去 ${weeks} 周 · ${activeDayCountInWeeks(weeks)} 天有记录`;
+    }
+  }
+
+  function setupTip() {
+    const grid = document.querySelector("[data-activity-grid]");
+    const tip = document.querySelector<HTMLElement>("[data-activity-tip]");
+    const tipDate = document.querySelector<HTMLElement>("[data-tip-date]");
+    const tipDetail = document.querySelector<HTMLElement>("[data-tip-detail]");
+    if (!grid || !tip || !tipDate || !tipDetail) return;
+
+    let active: HTMLElement | null = null;
+
+    const show = (cell: HTMLElement) => {
+      active = cell;
+      tipDate.textContent = cell.dataset.dateLabel ?? "";
+      tipDetail.textContent = cell.dataset.detail ?? "";
+      tip.hidden = false;
+      place(cell);
+    };
+
+    const hide = () => {
+      active = null;
+      tip.hidden = true;
+    };
+
+    const place = (cell: HTMLElement) => {
+      const r = cell.getBoundingClientRect();
+      tip.style.left = `${r.left + r.width / 2}px`;
+      tip.style.top = `${r.top - 6}px`;
+    };
+
+    grid.addEventListener("mouseover", (e) => {
+      const cell = (e.target as HTMLElement).closest<HTMLElement>(".activity-cell[data-idx]");
+      if (cell && cell !== active) show(cell);
+    });
+    grid.addEventListener("mouseout", (e) => {
+      const rel = e.relatedTarget as Node | null;
+      if (!rel || !(rel as HTMLElement).closest?.(".activity-cell[data-idx]")) hide();
+    });
+    grid.addEventListener("focusin", (e) => {
+      const cell = (e.target as HTMLElement).closest<HTMLElement>(".activity-cell[data-idx]");
+      if (cell) show(cell);
+    });
+    grid.addEventListener("focusout", hide);
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (active) place(active);
+      },
+      true,
+    );
+  }
+
+  paint();
+  setupTip();
+  window.addEventListener("storage", paint);
+  window.addEventListener("focus", paint);
+  window.addEventListener("activity-change", paint);
+</script>
+
+<style>
+  .activity {
+    position: relative;
+    margin: 0 0 2rem;
+    width: 100%;
+  }
+  .activity-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.55rem;
+  }
+  .activity-label {
+    margin: 0;
+    color: var(--c-text-muted);
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+  }
+  .activity-summary {
+    margin: 0;
+    color: var(--c-text-dim);
+    font-size: 0.72rem;
+  }
+  .activity-grid {
+    display: flex;
+    gap: 2px;
+    width: 100%;
+  }
+  .activity-week {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .activity-cell {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--c-border) 70%, var(--c-bg));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-border) 40%, transparent);
+    cursor: default;
+  }
+  .activity-cell[data-idx]:hover,
+  .activity-cell[data-idx]:focus-visible {
+    outline: 1px solid var(--accent-soft);
+    outline-offset: 1px;
+  }
+  .activity-cell[data-level="1"] {
+    background: color-mix(in srgb, var(--good) 32%, var(--c-bg));
+    box-shadow: none;
+  }
+  .activity-cell[data-level="2"] {
+    background: color-mix(in srgb, var(--good) 55%, var(--c-bg));
+    box-shadow: none;
+  }
+  .activity-cell[data-level="3"] {
+    background: color-mix(in srgb, var(--good) 78%, var(--c-bg));
+    box-shadow: none;
+  }
+  .activity-cell[data-level="4"] {
+    background: var(--good);
+    box-shadow: none;
+  }
+  .activity-foot {
+    margin-top: 0.5rem;
+  }
+  .activity-legend {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    color: var(--c-text-dim);
+    font-size: 0.68rem;
+  }
+  .activity-legend .activity-cell {
+    flex: 0 0 auto;
+    width: 10px;
+    height: 10px;
+    aspect-ratio: auto;
+  }
+  .activity-tip {
+    position: fixed;
+    z-index: 40;
+    transform: translate(-50%, -100%);
+    pointer-events: none;
+    padding: 0.45rem 0.65rem;
+    background: var(--paper);
+    border: 1px solid var(--c-border-light);
+    border-radius: 3px;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--c-text) 8%, transparent);
+    white-space: nowrap;
+  }
+  .activity-tip-date {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--c-text);
+  }
+  .activity-tip-detail {
+    margin: 0.15rem 0 0;
+    font-size: 0.72rem;
+    color: var(--c-text-dim);
+  }
+</style>

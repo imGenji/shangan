@@ -1,0 +1,173 @@
+---
+import {
+  OBJECTIVE_TOTAL,
+  SYLLABUS_PHASES,
+  SYLLABUS_SUBJECTS,
+  type SyllabusSubject,
+} from "../../data/syllabus";
+import SyllabusTree from "./SyllabusTree.astro";
+
+interface Props {
+  publishedTags?: Set<string>;
+  publishedTopics?: Set<string>;
+}
+
+const { publishedTags = new Set(), publishedTopics = new Set() } = Astro.props;
+
+const subjects = [...SYLLABUS_SUBJECTS].sort((a, b) => b.objective - a.objective);
+
+function segStyle(s: SyllabusSubject) {
+  return `--seg-h:${s.hue};flex:${s.objective}`;
+}
+---
+
+<div class="syllabus">
+  <section class="score-map" aria-labelledby="score-map-title">
+    <h3 id="score-map-title" class="cap meta">客观题 {OBJECTIVE_TOTAL} 分 · 科目比重</h3>
+    <div class="score-bar" role="img" aria-label="客观题八科分值比重">
+      {
+        subjects.map((s) => (
+          <div class="seg" style={segStyle(s)} title={`${s.name} ${s.objective} 分`}>
+            {s.objective >= 30 && <span class="seg-in">{s.name}</span>}
+          </div>
+        ))
+      }
+    </div>
+    <ul class="legend">
+      {
+        subjects.map((s) => (
+          <li>
+            <i style={`--seg-h:${s.hue}`} />
+            <span>{s.name}</span>
+            <strong>{s.objective}</strong>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <SyllabusTree publishedTags={publishedTags} publishedTopics={publishedTopics} />
+
+  <section class="phases" aria-labelledby="phases-title">
+    <h3 id="phases-title" class="cap meta">四阶段路线</h3>
+    <ol class="phase-list">
+      {
+        SYLLABUS_PHASES.map((p, i) => (
+          <li>
+            <span class="phase-num">{String(i + 1).padStart(2, "0")}</span>
+            <div class="phase-body">
+              <p class="phase-name">
+                {p.name}
+                <span class="meta"> · {p.articles} 篇 · {p.period}</span>
+              </p>
+              <p class="phase-goal meta">{p.goal}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+</div>
+
+<style>
+  .syllabus {
+    display: grid;
+    gap: 1.75rem;
+  }
+  .cap {
+    margin: 0 0 0.75rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--c-text-dim);
+  }
+
+  .score-bar {
+    display: flex;
+    height: 2rem;
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid var(--c-border);
+  }
+  .seg {
+    min-width: 0;
+    background: color-mix(in srgb, hsl(var(--seg-h) 42% 46%) 72%, var(--paper));
+    border-right: 1px solid color-mix(in srgb, var(--paper) 40%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: filter 0.15s;
+  }
+  .seg:last-child { border-right: 0; }
+  .seg:hover { filter: brightness(1.06); }
+  .seg-in {
+    font-size: 0.62rem;
+    color: var(--c-text);
+    opacity: 0.85;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 0.2rem;
+  }
+  .legend {
+    list-style: none;
+    margin: 0.65rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.35rem 0.75rem;
+  }
+  @media (max-width: 720px) {
+    .legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  .legend li {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    color: var(--c-text-muted);
+  }
+  .legend i {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 1px;
+    flex: 0 0 auto;
+    background: color-mix(in srgb, hsl(var(--seg-h) 42% 46%) 72%, var(--paper));
+    border: 1px solid var(--c-border);
+  }
+  .legend strong {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--c-text-dim);
+  }
+
+  .phase-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--c-border);
+  }
+  .phase-list li {
+    display: grid;
+    grid-template-columns: 2rem 1fr;
+    gap: 0.65rem;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid var(--c-border);
+  }
+  .phase-num {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--accent);
+    padding-top: 0.1rem;
+  }
+  .phase-name {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 500;
+  }
+  .phase-goal {
+    margin: 0.2rem 0 0;
+    line-height: 1.55;
+  }
+</style>

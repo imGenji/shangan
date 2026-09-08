@@ -6,16 +6,17 @@ interface Props {
   date: Date;
   day: number;
   topic?: string;
+  tags?: string[];
   readMinutes?: number;
   toc?: TocItem[];
 }
 
-const { date, day, topic, readMinutes, toc } = Astro.props;
+const { date, day, topic, tags = [], readMinutes, toc } = Astro.props;
 ---
 
 <div class="post-shell">
   <div class="sidebar-col">
-    <PostSidebar date={date} day={day} topic={topic} readMinutes={readMinutes} toc={toc} />
+    <PostSidebar date={date} day={day} topic={topic} tags={tags} readMinutes={readMinutes} toc={toc} />
   </div>
   <div class="main-col">
     <slot />

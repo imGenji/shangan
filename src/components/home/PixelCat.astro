@@ -1,0 +1,212 @@
+---
+/** 右下角像素黑猫：基础帧 + 双眼独立瞳孔追踪 */
+---
+
+<div class="pixel-cat" id="pixelCat" aria-hidden="true">
+  <canvas id="pixelCatCanvas" width="15" height="15"></canvas>
+</div>
+
+<script is:inline>
+  (function () {
+    const canvas = document.getElementById("pixelCatCanvas");
+    const wrapper = document.getElementById("pixelCat");
+    if (!canvas || !wrapper) return;
+
+    const ctx = canvas.getContext("2d");
+    const W = 15;
+    const H = 13;
+
+    // 0 透明 · 1 描边 · 2-4 毛色层次 · 5 耳内 · 6 黄眼 · 7 高光 · 8 瞳孔 · 9 鼻 · 10 须
+    const C = [
+      null,
+      "#121212",
+      "#2e2e2e",
+      "#424242",
+      "#565656",
+      "#7a5a44",
+      "#ffb000",
+      "#ffd86a",
+      "#0a0a0a",
+      "#e09088",
+      "#b0b0b0",
+    ];
+
+    // 不含瞳孔，眼位留 6，瞳孔运行时叠加
+    const FRAME = [
+      [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0],
+      [0, 0, 1, 5, 1, 0, 0, 0, 0, 0, 1, 5, 1, 0, 0],
+      [0, 1, 5, 4, 5, 1, 1, 1, 1, 1, 5, 4, 5, 1, 0],
+      [1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1],
+      [1, 2, 3, 6, 6, 3, 3, 3, 3, 3, 6, 6, 3, 2, 1],
+      [1, 2, 3, 6, 6, 3, 3, 3, 3, 3, 6, 6, 3, 2, 1],
+      [1, 2, 3, 3, 3, 3, 9, 3, 9, 3, 3, 3, 3, 2, 1],
+      [1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1],
+      [0, 1, 10, 2, 2, 2, 2, 2, 2, 2, 2, 2, 10, 1, 0],
+      [0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0],
+      [0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0],
+      [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+      [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+    ];
+
+    const BLINK = FRAME.map((row, i) =>
+      i === 4 || i === 5
+        ? [1, 2, 3, 8, 8, 3, 3, 3, 3, 3, 8, 8, 3, 2, 1]
+        : row,
+    );
+
+    // 左眼 / 右眼各 2×2 黄眼区域，瞳孔在其内偏移
+    const EYES = [
+      { x: 3, y: 4, w: 2, h: 2 },
+      { x: 10, y: 4, w: 2, h: 2 },
+    ];
+
+    let mouseX = 0;
+    let mouseY = 0;
+    let bobPhase = 0;
+    let isBlinking = false;
+    let blinkTimer = 2000 + Math.random() * 3000;
+    let jumpVel = 0;
+    let jumpY = 0;
+    let lastTime = 0;
+
+    function pupilOffset(screenCx, screenCy) {
+      const dx = mouseX - screenCx;
+      const dy = mouseY - screenCy;
+      const len = Math.hypot(dx, dy) || 1;
+      const max = 0.85;
+      return {
+        ox: Math.max(-max, Math.min(max, (dx / len) * max)),
+        oy: Math.max(-max, Math.min(max, (dy / len) * max)),
+      };
+    }
+
+    function drawFrame(frame, offsetY) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const oy = Math.round(offsetY);
+      for (let r = 0; r < H; r++) {
+        for (let c = 0; c < W; c++) {
+          const ci = frame[r][c];
+          if (!ci) continue;
+          ctx.fillStyle = C[ci];
+          ctx.fillRect(c, r + oy, 1, 1);
+        }
+      }
+    }
+
+    function drawPupils(offsetY) {
+      const rect = canvas.getBoundingClientRect();
+      const sx = rect.width / W;
+      const sy = rect.height / canvas.height;
+      const oy = Math.round(offsetY);
+
+      for (const eye of EYES) {
+        const cx = eye.x + eye.w / 2;
+        const cy = eye.y + eye.h / 2 + oy;
+        const screenCx = rect.left + cx * sx;
+        const screenCy = rect.top + cy * sy;
+        const { ox, oy: pyo } = pupilOffset(screenCx, screenCy);
+        const px = Math.round(cx - 0.5 + ox);
+        const py = Math.round(cy - 0.5 + pyo);
+        ctx.fillStyle = C[8];
+        ctx.fillRect(px, py, 1, 1);
+      }
+    }
+
+    document.addEventListener("mousemove", (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    document.addEventListener(
+      "touchmove",
+      (e) => {
+        if (e.touches[0]) {
+          mouseX = e.touches[0].clientX;
+          mouseY = e.touches[0].clientY;
+        }
+      },
+      { passive: true },
+    );
+
+    wrapper.addEventListener("click", () => {
+      if (jumpY >= 0 && jumpVel >= 0) {
+        jumpVel = -3;
+        jumpY = -0.1;
+      }
+    });
+
+    function animate(ts) {
+      requestAnimationFrame(animate);
+      const dt = ts - lastTime;
+      if (dt < 50) return;
+      lastTime = ts;
+
+      bobPhase += dt * 0.002;
+      const bobY = Math.sin(bobPhase) * 0.8;
+
+      blinkTimer -= dt;
+      if (blinkTimer <= 0) {
+        isBlinking = true;
+        setTimeout(() => {
+          isBlinking = false;
+        }, 140);
+        blinkTimer = 2200 + Math.random() * 2800;
+      }
+
+      if (jumpY < 0 || jumpVel < 0) {
+        jumpVel += 0.28;
+        jumpY += jumpVel;
+        if (jumpY > 0) {
+          jumpY = 0;
+          jumpVel = 0;
+        }
+      }
+
+      const offsetY = bobY + jumpY;
+      const frame = isBlinking ? BLINK : FRAME;
+      drawFrame(frame, offsetY);
+      if (!isBlinking) drawPupils(offsetY);
+    }
+
+    requestAnimationFrame(animate);
+  })();
+</script>
+
+<style>
+  .pixel-cat {
+    position: fixed;
+    right: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 45;
+    padding: 0.35rem;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--paper) 88%, transparent);
+    border: 1px solid var(--c-border);
+    box-shadow: 0 4px 16px color-mix(in srgb, var(--c-text) 10%, transparent);
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: auto;
+  }
+
+  #pixelCatCanvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    width: 90px;
+    height: 90px;
+  }
+
+  @media (max-width: 640px) {
+    .pixel-cat {
+      right: 0.75rem;
+      padding: 0.25rem;
+    }
+    #pixelCatCanvas {
+      width: 72px;
+      height: 72px;
+    }
+  }
+</style>

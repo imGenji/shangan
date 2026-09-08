@@ -1,52 +1,124 @@
 ---
+import { articleLabel } from "../../data/plan";
+
 interface Props {
   day?: number;
-  topic?: string;
+  subject?: string;
+  scope?: string;
   date?: string;
+  year?: number;
   readMinutes?: number;
   title: string;
   summary: string;
+  /** 考点链，一行等宽字展示本篇脉络 */
+  chain?: string[];
+  /** 底部元信息，如 [["SUBJECT","民法"],["DRILL","19 题"]] */
+  facts?: [string, string][];
 }
 
-const { day, topic, date, readMinutes, title, summary } = Astro.props;
+const {
+  day,
+  subject,
+  scope,
+  date,
+  year = 2026,
+  readMinutes,
+  title,
+  summary,
+  chain = [],
+  facts = [],
+} = Astro.props;
+
+const kicker = [
+  day !== undefined && day > 0 ? articleLabel(day) : day === 0 ? "总览" : null,
+  subject,
+  scope,
+  String(year),
+].filter(Boolean);
 ---
 
 <header class="hero">
+  <p class="meta kicker">{kicker.join("　·　")}</p>
+
+  <h1>{title}</h1>
+
+  {chain.length > 0 && <p class="chain">{chain.join("  →  ")}</p>}
+
+  <p class="lede">{summary}</p>
+
   {
-    day !== undefined && (
-      <div class="row">
-        <span class="meta day">Day {String(day).padStart(2, "0")}</span>
-        {topic && <span class="meta">{topic}</span>}
-        {date && <span class="meta">{date}</span>}
-        {readMinutes && <span class="meta">约 {readMinutes} 分钟</span>}
-      </div>
+    (facts.length > 0 || date || readMinutes) && (
+      <dl class="facts">
+        {facts.map(([k, v]) => (
+          <div>
+            <dt class="meta">{k}</dt>
+            <dd>{v}</dd>
+          </div>
+        ))}
+        {date && (
+          <div>
+            <dt class="meta">DATE</dt>
+            <dd>{date}</dd>
+          </div>
+        )}
+        {readMinutes && (
+          <div>
+            <dt class="meta">TIME</dt>
+            <dd>{readMinutes} min</dd>
+          </div>
+        )}
+      </dl>
     )
   }
-  <h1>{title}</h1>
-  <p class="lede">{summary}</p>
 </header>
 
 <style>
   .hero {
-    margin-bottom: 3rem;
+    margin: 1.5rem 0 3.5rem;
+    max-width: var(--w-text);
   }
-  .row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.85rem;
-    margin-bottom: 0.75rem;
-  }
-  .day {
-    color: var(--accent);
+  .kicker {
+    margin: 0 0 1.75rem;
   }
   h1 {
-    font-size: clamp(1.75rem, 4vw, 2.35rem);
-    margin: 0 0 1rem;
+    font-size: clamp(2rem, 5.2vw, 3.35rem);
+    line-height: 1.22;
+    margin: 0 0 1.5rem;
+    letter-spacing: -0.015em;
+  }
+  .chain {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 1.9;
+    color: var(--accent);
+    margin: 0 0 1.5rem;
   }
   .lede {
     color: var(--c-text-muted);
     margin: 0;
-    font-size: 1.05rem;
-    line-height: 1.8;
+    font-size: 1.06rem;
+    line-height: 1.95;
+  }
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem 2.25rem;
+    margin: 2.25rem 0 0;
+    padding-top: 1.35rem;
+    border-top: 1px solid var(--c-border);
+  }
+  .facts div {
+    display: flex;
+    align-items: baseline;
+    gap: 0.55rem;
+  }
+  .facts dt {
+    margin: 0;
+  }
+  .facts dd {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--c-text-muted);
+    border-bottom: 1px solid var(--c-border-light);
   }
 </style>

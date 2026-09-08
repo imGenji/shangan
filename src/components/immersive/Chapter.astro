@@ -3,17 +3,22 @@ interface Props {
   id: string;
   num: number | string;
   title: string;
+  /** 英文/说明副标题，参考站的双行标题写法 */
+  sub?: string;
 }
 
-const { id, num, title } = Astro.props;
-const label = String(num).padStart(2, "0");
+const { id, num, title, sub } = Astro.props;
+const label = `C${String(num).padStart(2, "0")}`;
 ---
 
 <section class="chap" id={id}>
-  <div class="chap-head">
+  <header class="chap-head">
     <span class="meta num">{label}</span>
-    <h2>{title}</h2>
-  </div>
+    <div>
+      <h2>{title}</h2>
+      {sub && <p class="sub">{sub}</p>}
+    </div>
+  </header>
   <div class="chap-body">
     <slot />
   </div>
@@ -21,31 +26,52 @@ const label = String(num).padStart(2, "0");
 
 <style>
   .chap {
-    margin: 3.5rem 0;
-    scroll-margin-top: 4rem;
+    margin: 4rem 0;
+    scroll-margin-top: 5.5rem;
+    max-width: var(--w-text);
   }
   .chap-head {
     display: flex;
-    gap: 0.85rem;
+    gap: 1rem;
     align-items: baseline;
-    margin-bottom: 1.25rem;
-    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.85rem;
     border-bottom: 1px solid var(--c-border);
   }
   .num {
     color: var(--accent);
-    min-width: 2rem;
+    flex: 0 0 auto;
+    padding-top: 0.35rem;
   }
   h2 {
     margin: 0;
-    font-size: 1.35rem;
+    font-size: 1.42rem;
+    line-height: 1.4;
+  }
+  .sub {
+    margin: 0.3rem 0 0;
+    font-size: 0.85rem;
+    color: var(--c-text-dim);
+    font-family: var(--font-mono);
   }
   .chap-body :global(p) {
-    margin: 0.85rem 0;
+    margin: 1.1rem 0;
   }
   .chap-body :global(ul),
   .chap-body :global(ol) {
-    margin: 0.75rem 0;
-    padding-left: 1.25rem;
+    margin: 1rem 0;
+    padding-left: 1.35rem;
+  }
+  .chap-body :global(li) {
+    margin: 0.45rem 0;
+  }
+  .chap-body :global(p.law-lead) {
+    margin: 1.35rem 0 0.65rem;
+    color: var(--c-text);
+  }
+  .chap-body :global(h3) {
+    font-size: 1.05rem;
+    margin: 2.25rem 0 0.85rem;
+    scroll-margin-top: 5.5rem;
   }
 </style>

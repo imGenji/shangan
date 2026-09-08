@@ -1,8 +1,8 @@
 /**
- * 构建前校验：嵌入题均有解析，且解析声明的答案与题库一致
- * ponyytail: O(n) 扫描，仅覆盖 analyses.ts 已收录的题
+ * 构建前校验 AI 解析：题 id 存在、声明答案与题库一致、正文非空。
+ * 这是拦截模型跑偏的唯一关口 —— 解析里把答案讲错，比没有解析更糟。
+ * ponytail: O(n) 扫描，仅覆盖 analyses.ts 已收录的题。
  */
-import fs from "node:fs";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
@@ -10,6 +10,9 @@ const choices = require("../src/data/quizzes/choices.json");
 const { QUIZ_ANALYSES } = await import("../src/data/quizzes/analyses.ts");
 
 const byId = new Map(choices.map((q) => [q.id, q]));
+const same = (a, b) =>
+  Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x, i) => x === b[i]);
+
 let failed = false;
 
 for (const [id, entry] of Object.entries(QUIZ_ANALYSES)) {
@@ -19,17 +22,17 @@ for (const [id, entry] of Object.entries(QUIZ_ANALYSES)) {
     failed = true;
     continue;
   }
-  if (entry.answer !== q.answer) {
+  if (!same(entry.answer, q.answer)) {
     console.error(
-      `[quiz-check] ${id} 解析 answer=${entry.answer} 与题库 ${q.answer} 不一致`,
+      `[quiz-check] ${id} 解析 answer=${JSON.stringify(entry.answer)} 与题库 ${JSON.stringify(q.answer)} 不一致`,
     );
     failed = true;
   }
   if (!entry.text?.trim()) {
-    console.error(`[quiz-check] ${id} 解析为空`);
+    console.error(`[quiz-check] ${id} 解析正文为空`);
     failed = true;
   }
 }
 
 if (failed) process.exit(1);
-console.log(`quiz-check ok: ${Object.keys(QUIZ_ANALYSES).length} 条解析`);
+console.log(`quiz-check ok: ${Object.keys(QUIZ_ANALYSES).length} 条 AI 解析`);

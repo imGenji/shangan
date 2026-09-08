@@ -1,16 +1,20 @@
 ---
 import type { TocItem } from "../../lib/toc";
+import { articleLabel, SITE_BRAND } from "../../data/plan";
+import { tagLabel } from "../../data/syllabus";
+import { planTagUrl, planTopicUrl } from "../../lib/tags";
 
 interface Props {
   date: Date;
   day: number;
   topic?: string;
+  tags?: string[];
   readMinutes?: number;
   author?: string;
   toc?: TocItem[];
 }
 
-const { date, day, topic, readMinutes, author = "备考笔记", toc = [] } = Astro.props;
+const { date, day, topic, tags = [], readMinutes, author = SITE_BRAND, toc = [] } = Astro.props;
 const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "/");
 ---
 
@@ -21,20 +25,27 @@ const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "/");
       <dd>{dateStr}</dd>
     </div>
     {
-      topic && (
+      (topic || tags.length > 0) && (
         <div class="row">
-          <dt class="meta">Tags</dt>
-          <dd>
-            <a class="tag" href="#">
-              #{topic}
-            </a>
+          <dt class="meta">标签</dt>
+          <dd class="tags">
+            {topic && (
+              <a class="tag" href={planTopicUrl(topic)}>
+                {topic}
+              </a>
+            )}
+            {tags.map((slug) => (
+              <a class="tag" href={planTagUrl(slug)}>
+                {tagLabel(slug)}
+              </a>
+            ))}
           </dd>
         </div>
       )
     }
     <div class="row">
-      <dt class="meta">Day</dt>
-      <dd>Day {String(day).padStart(2, "0")}</dd>
+      <dt class="meta">篇目</dt>
+      <dd>{articleLabel(day)}</dd>
     </div>
     <div class="row">
       <dt class="meta">Author</dt>
@@ -114,12 +125,17 @@ const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "/");
     margin: 0;
     color: var(--c-text-muted);
   }
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.5rem;
+  }
   .tag {
     color: var(--accent);
     text-decoration: none;
   }
   .tag:hover {
-    text-decoration: underline;
+    color: var(--accent-soft);
   }
   .toc {
     padding-top: 1.25rem;

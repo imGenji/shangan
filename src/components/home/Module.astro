@@ -1,0 +1,64 @@
+---
+interface Props {
+  title: string;
+  hint?: string;
+  href?: string;
+  linkLabel?: string;
+}
+
+const { title, hint, href, linkLabel = "查看全部 →" } = Astro.props;
+---
+
+<section class="mod">
+  <header class="mod-head">
+    <div>
+      <h2>{title}</h2>
+      {hint && <p class="hint">{hint}</p>}
+    </div>
+    {href && <a class="more meta" href={href}>{linkLabel}</a>}
+  </header>
+  <div class="mod-body">
+    <slot />
+  </div>
+</section>
+
+<style>
+  .mod {
+    background: var(--paper);
+    border: 1px solid var(--c-border);
+    border-radius: 3px;
+    padding: 1.25rem 1.35rem 1.35rem;
+    height: 100%;
+  }
+  .mod-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--c-border);
+  }
+  h2 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .hint {
+    margin: 0.25rem 0 0;
+    font-size: 0.78rem;
+    color: var(--c-text-dim);
+    font-family: var(--font-mono);
+  }
+  .more {
+    flex: 0 0 auto;
+    text-decoration: none;
+    color: var(--accent);
+    white-space: nowrap;
+    padding-top: 0.15rem;
+  }
+  .more:hover {
+    color: var(--accent-soft);
+  }
+</style>

@@ -1,8 +1,17 @@
 ---
 import BaseLayout from "./BaseLayout.astro";
+import "../styles/article-mark.css";
 import ReadingProgress from "../components/immersive/ReadingProgress.astro";
+import ArticleNav from "../components/immersive/ArticleNav.astro";
 import PostShell from "../components/immersive/PostShell.astro";
-import type { TocItem } from "../../lib/toc";
+import CheckIn from "../components/immersive/CheckIn.astro";
+import type { TocItem } from "../lib/toc";
+
+interface NavItem {
+  href: string;
+  label: string;
+  title: string;
+}
 
 interface Props {
   title: string;
@@ -10,74 +19,29 @@ interface Props {
   day?: number;
   date: Date;
   topic?: string;
+  tags?: string[];
   readMinutes?: number;
   toc?: TocItem[];
+  prev?: NavItem | null;
+  next?: NavItem | null;
 }
 
-const { title, description, day, date, topic, readMinutes, toc } = Astro.props;
+const { title, description, day, date, topic, tags = [], readMinutes, toc = [], prev = null, next = null } = Astro.props;
 ---
 
 <BaseLayout title={title} description={description}>
   <ReadingProgress />
-  <PostShell date={date} day={day ?? 0} topic={topic} readMinutes={readMinutes} toc={toc}>
+  <ArticleNav prev={prev} next={next} />
+  <PostShell date={date} day={day ?? 0} topic={topic} tags={tags} readMinutes={readMinutes} toc={toc}>
     <article class="immersive">
       <slot />
-      {
-        day !== undefined && (
-          <footer class="checkin">
-            <button id="checkin" type="button" data-day={day}>
-              标记今天已完成
-            </button>
-          </footer>
-        )
-      }
+      {day !== undefined && <CheckIn day={day} />}
     </article>
   </PostShell>
 </BaseLayout>
 
-<script>
-  const btn = document.getElementById("checkin") as HTMLButtonElement | null;
-  if (btn) {
-    const day = Number(btn.dataset.day);
-    const KEY = "checkins";
-    const read = (): number[] => JSON.parse(localStorage.getItem(KEY) ?? "[]");
-    const paint = () => {
-      const done = read().includes(day);
-      btn.textContent = done ? "已完成 · 点击撤销" : "标记今天已完成";
-      btn.dataset.done = String(done);
-    };
-    btn.addEventListener("click", () => {
-      const days = read();
-      const next = days.includes(day) ? days.filter((d) => d !== day) : [...days, day];
-      localStorage.setItem(KEY, JSON.stringify(next.sort((a, b) => a - b)));
-      paint();
-    });
-    paint();
-  }
-</script>
-
 <style>
   .immersive {
     max-width: none;
-  }
-  .checkin {
-    margin-top: 4rem;
-    padding-top: 2rem;
-    border-top: 1px solid var(--c-border);
-  }
-  #checkin {
-    background: none;
-    border: 1px solid var(--c-border-light);
-    border-radius: 6px;
-    color: var(--c-text);
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.9rem;
-    padding: 0.55rem 1.1rem;
-  }
-  #checkin:hover,
-  #checkin[data-done="true"] {
-    border-color: var(--accent);
-    color: var(--accent);
   }
 </style>

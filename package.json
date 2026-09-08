@@ -9,16 +9,22 @@
     "dev": "astro dev",
     "build": "node scripts/check-quiz-analyses.mjs && astro build",
     "preview": "astro preview",
-    "import:quizzes": "node scripts/import-aishangan.mjs",
+    "import:quizzes": "node scripts/import-all.mjs",
+    "pick:quizzes": "node scripts/quiz-pick.mjs",
+    "gen:analyses": "node scripts/gen-analyses.mjs",
     "check:quizzes": "node scripts/check-quiz-analyses.mjs",
     "astro": "astro"
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "^0.4.0",
     "@astrojs/mdx": "^8.0.0",
-    "astro": "^7.3.1"
+    "astro": "^7.3.1",
+    "canvas-confetti": "^1.9.4"
   },
   "allowScripts": {
     "esbuild": true
+  },
+  "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0"
   }
 }

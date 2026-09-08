@@ -1,0 +1,261 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { withBase } from "../lib/base";
+import { planAllUrl, planTagUrl, planTopicUrl } from "../lib/tags";
+import { PLANNED_ARTICLES, articleLabel } from "../data/plan";
+import { TAG_BY_SLUG, tagLabel } from "../data/syllabus";
+
+const articles = (await getCollection("articles")).sort((a, b) => a.data.day - b.data.day);
+const learningArticles = articles.filter((a) => a.data.day > 0);
+---
+
+<BaseLayout title="文章目录 · 2027 法考">
+  <header class="head">
+    <a class="back meta" href={withBase()}>← 首页</a>
+    <h1>文章目录</h1>
+    <p class="lede">已发布 {learningArticles.length} 篇 · 计划 {PLANNED_ARTICLES} 篇精讲</p>
+  </header>
+
+  <div class="filter-bar" data-filter-bar hidden>
+    <span class="filter-label meta">筛选</span>
+    <span class="filter-text" data-filter-text></span>
+    <a class="filter-clear meta" href={planAllUrl()} data-filter-clear>清除</a>
+  </div>
+  <p class="empty meta" data-empty hidden>没有匹配的文章</p>
+
+  <ol class="list" data-list>
+    {
+      articles.map((a) => (
+        <li
+          data-day={a.data.day}
+          data-topic={a.data.topic ?? ""}
+          data-tags={(a.data.tags ?? []).join(" ")}
+        >
+          <div class="item">
+            <div class="row">
+              <span class="meta day">{articleLabel(a.data.day)}</span>
+              {a.data.topic && (
+                <a class="chip chip-subject meta" href={planTopicUrl(a.data.topic)}>
+                  {a.data.topic}
+                </a>
+              )}
+              {a.data.scope && <span class="meta">{a.data.scope}</span>}
+              {a.data.readMinutes && <span class="meta">{a.data.readMinutes} min</span>}
+              <span class="done-tag" hidden aria-label="已完成">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+                  <path d="M4 12.5 L9.5 18 L20 6.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                已完成
+              </span>
+            </div>
+            {(a.data.tags ?? []).length > 0 && (
+              <div class="tag-row">
+                {(a.data.tags ?? []).map((slug) => (
+                  <a class="chip chip-tag" href={planTagUrl(slug)}>
+                    {tagLabel(slug)}
+                  </a>
+                ))}
+              </div>
+            )}
+            <a class="item-link" href={withBase(`articles/${a.id}/`)}>
+              <h2>{a.data.title}</h2>
+              <p>{a.data.summary}</p>
+            </a>
+          </div>
+        </li>
+      ))
+    }
+  </ol>
+</BaseLayout>
+
+<script define:vars={{ TAG_BY_SLUG }} is:inline>
+  const params = new URLSearchParams(location.search);
+  const topic = params.get("topic") ?? "";
+  const tag = params.get("tag") ?? "";
+
+  const bar = document.querySelector("[data-filter-bar]");
+  const text = document.querySelector("[data-filter-text]");
+  const empty = document.querySelector("[data-empty]");
+  const items = [...document.querySelectorAll("[data-list] > li")];
+
+  function match(li) {
+    const liTopic = li.dataset.topic ?? "";
+    const liTags = (li.dataset.tags ?? "").split(" ").filter(Boolean);
+    if (topic && liTopic !== topic) return false;
+    if (tag && !liTags.includes(tag)) return false;
+    return true;
+  }
+
+  function applyFilter() {
+    const active = topic || tag;
+    if (bar) bar.hidden = !active;
+    if (text && active) {
+      const parts = [];
+      if (topic) parts.push(`科目 · ${topic}`);
+      if (tag) parts.push(`标签 · ${TAG_BY_SLUG[tag]?.label ?? tag}`);
+      text.textContent = parts.join("　");
+    }
+    let visible = 0;
+    items.forEach((li) => {
+      const show = match(li);
+      li.hidden = !show;
+      if (show) visible++;
+    });
+    if (empty) empty.hidden = visible > 0;
+  }
+
+  applyFilter();
+
+  let done = [];
+  try {
+    const raw = JSON.parse(localStorage.getItem("checkins") ?? "[]");
+    done = raw.map((x) => (typeof x === "number" ? x : x.day));
+  } catch {
+    done = [];
+  }
+  document.querySelectorAll("[data-list] li").forEach((li) => {
+    if (!done.includes(Number(li.dataset.day))) return;
+    li.dataset.done = "true";
+    const tagEl = li.querySelector(".done-tag");
+    if (tagEl) tagEl.hidden = false;
+  });
+</script>
+
+<style>
+  .head {
+    max-width: var(--w-text);
+    margin-bottom: 2rem;
+  }
+  .back {
+    display: inline-block;
+    margin-bottom: 1.25rem;
+    text-decoration: none;
+    color: var(--c-text-dim);
+  }
+  .back:hover { color: var(--accent); }
+  h1 {
+    font-size: clamp(1.5rem, 3vw, 1.85rem);
+    margin: 0 0 0.5rem;
+  }
+  .lede {
+    margin: 0;
+    color: var(--c-text-muted);
+    font-size: 0.92rem;
+  }
+
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1.25rem;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--c-border);
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--accent) 6%, var(--paper));
+  }
+  .filter-label {
+    font-size: 0.72rem;
+    color: var(--c-text-dim);
+  }
+  .filter-text {
+    flex: 1;
+    font-size: 0.88rem;
+    font-weight: 500;
+  }
+  .filter-clear {
+    text-decoration: none;
+    color: var(--accent);
+    font-size: 0.78rem;
+  }
+  .filter-clear:hover { color: var(--accent-soft); }
+  .empty {
+    margin: 0 0 1rem;
+    color: var(--copper);
+  }
+
+  .list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: var(--w-page);
+  }
+  .list li {
+    border-top: 1px solid var(--c-border);
+  }
+  .list li[hidden] {
+    display: none;
+  }
+  .item {
+    padding: 1.5rem 0;
+  }
+  .item-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+  .item-link:hover h2 {
+    color: var(--accent);
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    align-items: center;
+  }
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.35rem;
+  }
+  .chip {
+    font-size: 0.72rem;
+    padding: 0.12rem 0.45rem;
+    border: 1px solid var(--c-border);
+    border-radius: 2px;
+    text-decoration: none;
+    color: var(--c-text-dim);
+    background: var(--paper);
+  }
+  .chip-subject {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 25%, var(--c-border));
+  }
+  .chip-tag:hover,
+  .chip-subject:hover {
+    color: var(--accent);
+    border-color: var(--accent-soft);
+  }
+  .day { color: var(--accent); }
+  .done-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--good);
+    font-size: 0.78rem;
+  }
+  .done-tag svg {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+  .list h2 {
+    font-size: 1.12rem;
+    margin: 0.45rem 0 0.5rem;
+  }
+  .list p {
+    margin: 0;
+    color: var(--c-text-muted);
+    font-size: 0.92rem;
+    line-height: 1.75;
+  }
+  .list li[data-done="true"] {
+    background: color-mix(in srgb, var(--good-pale) 45%, transparent);
+    margin: 0 -0.5rem;
+    padding: 0 0.5rem;
+    border-radius: 3px;
+  }
+  .list li[data-done="true"] h2 {
+    color: var(--c-text-dim);
+  }
+</style>

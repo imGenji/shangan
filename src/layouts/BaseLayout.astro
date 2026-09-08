@@ -1,13 +1,15 @@
 ---
 import "../styles/theme.css";
 import { withBase } from "../lib/base";
+import { SITE_BRAND, SITE_DESCRIPTION } from "../data/plan";
 
 interface Props {
   title: string;
   description?: string;
+  brand?: string;
 }
 
-const { title, description = "省考行测备考笔记" } = Astro.props;
+const { title, description = SITE_DESCRIPTION, brand = SITE_BRAND } = Astro.props;
 ---
 
 <!doctype html>
@@ -27,7 +29,7 @@ const { title, description = "省考行测备考笔记" } = Astro.props;
   </head>
   <body>
     <header class="shell site-head">
-      <a href={withBase()} class="brand">备考笔记</a>
+      <a href={withBase()} class="brand">{brand}</a>
       <button id="mode-toggle" type="button" class="meta" aria-label="切换明暗模式">明 / 暗</button>
     </header>
 

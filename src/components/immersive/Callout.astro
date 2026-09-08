@@ -15,14 +15,16 @@ const { tone = "info", title } = Astro.props;
 <style>
   .callout {
     margin: 1.75rem 0;
-    padding: 1rem 1.1rem;
+    padding: 1rem 1.15rem;
     border-left: 2px solid var(--accent);
-    background: color-mix(in srgb, var(--accent) 6%, var(--c-bg-alt));
-    border-radius: 0 6px 6px 0;
+    background: var(--paper);
+    border-radius: 0 3px 3px 0;
   }
   .callout.warn {
-    border-left-color: #fbbf24;
-    background: color-mix(in srgb, #fbbf24 8%, var(--c-bg-alt));
+    border-left-color: var(--warn);
+  }
+  .callout.tip {
+    border-left-color: var(--copper);
   }
   .callout-title {
     margin: 0 0 0.35rem;
