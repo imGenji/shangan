@@ -120,6 +120,15 @@ const learningArticles = articles.filter((a) => a.data.day > 0);
     const tagEl = li.querySelector(".done-tag");
     if (tagEl) tagEl.hidden = false;
   });
+
+  // 无筛选时滚动到「学到哪了」：已完成最高篇，新用户为第 0 篇
+  const scrollDay = done.length ? Math.max(...done.map(Number)) : 0;
+  if (!topic && !tag) {
+    const target = document.querySelector(`[data-list] li[data-day="${scrollDay}"]`);
+    if (target) {
+      requestAnimationFrame(() => target.scrollIntoView({ block: "center", behavior: "instant" }));
+    }
+  }
 </script>
 
 <style>
