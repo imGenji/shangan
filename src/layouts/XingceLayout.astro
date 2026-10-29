@@ -1,0 +1,54 @@
+---
+import "../styles/xingce.css";
+import { withBase } from "../lib/base";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = "行测真题刷题" } = Astro.props;
+const path = Astro.url.pathname;
+const here = (part: string) => (path.includes(`/xingce/${part}`) ? "is-here" : "");
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href={withBase("favicon.svg")} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+  </head>
+  <body>
+    <header class="xc-nav">
+      <div class="xc-nav-in">
+        <a class="xc-brand" href={withBase("xingce/")}>
+          <span class="xc-logo" aria-hidden="true">行</span>
+          <span>行测真题</span>
+        </a>
+        <nav aria-label="主导航">
+          <a class={here("practice")} href={withBase("xingce/practice/")}>专项练习</a>
+          <a class={here("papers")} href={withBase("xingce/papers/")}>套卷模考</a>
+          <a class={here("me")} href={withBase("xingce/me/")}>我的</a>
+        </nav>
+        <div class="xc-nav-end">
+          <a class="today-pill" href={withBase("xingce/me/")} title="今天做过的题">今日 <b data-nav-today>0</b> 题</a>
+          <a class="xc-back" href={withBase()}>法考</a>
+        </div>
+      </div>
+    </header>
+    <slot />
+    <footer class="xc-foot">
+      <div class="xc-foot-in">
+        <span>题目来自公开的历年行测真题整理，仅供个人学习。</span>
+        <span>进度保存在本机浏览器</span>
+      </div>
+    </footer>
+    <script>
+      import { bootNav } from "../lib/xingce/view";
+      bootNav();
+    </script>
+  </body>
+</html>

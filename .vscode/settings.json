@@ -1,0 +1,16 @@
+{
+  // 题库图片/数据、构建产物、上游缓存各约 4 万文件，不监听不搜索，避免编辑器卡死
+  "files.watcherExclude": {
+    "**/public/xingce/**": true,
+    "**/dist/**": true,
+    "**/.cache/**": true,
+    "**/.astro/**": true,
+    "**/node_modules/**": true
+  },
+  "search.exclude": {
+    "**/public/xingce/**": true,
+    "**/dist/**": true,
+    "**/.cache/**": true
+  },
+  "search.followSymlinks": false
+}

@@ -1,0 +1,181 @@
+---
+import XingceLayout from "../../layouts/XingceLayout.astro";
+import { withBase } from "../../lib/base";
+import { readXingceIndex } from "../../lib/xingce/index-file";
+
+const index = readXingceIndex();
+const modules = index?.modules ?? ["政治理论", "常识判断", "言语理解与表达", "数量关系", "判断推理", "资料分析"];
+const counts = index?.stats.modules ?? {};
+const unique = index?.stats.uniqueQuestions ?? 0;
+const papers = index?.stats.papers ?? 0;
+const years = (index?.papers ?? []).map((p) => p.year).filter((n): n is number => !!n);
+const yearFrom = years.length ? Math.min(...years) : 2016;
+const yearTo = years.length ? Math.max(...years) : 2026;
+const recentPapers = (index?.papers ?? []).filter((p) => p.modules.length >= 4).slice(0, 3);
+
+const MOD_DESC: Record<string, string> = {
+  政治理论: "时政与理论，记忆为主",
+  常识判断: "法律、经济、科技、人文",
+  言语理解与表达: "逻辑填空、片段阅读",
+  数量关系: "数学运算、数字推理",
+  判断推理: "图形、定义、类比、逻辑",
+  资料分析: "图表数据、增长与比重",
+};
+---
+
+<XingceLayout title="行测真题刷题">
+  <main class="home" data-home>
+    <section class="hero">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="hero-in">
+        <div class="hero-copy">
+          <p class="hero-badge"><span>新</span> {yearFrom}–{yearTo} 国考省考真题已收录</p>
+          <h1>每一道真题，<br /><em>都当场弄明白。</em></h1>
+          <p class="hero-sub">
+            {unique.toLocaleString("zh-CN")} 道去重真题，{papers} 套完整试卷。专项练习做一题判一题，套卷模考按真实考试计时。
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary btn-lg" href={withBase("xingce/practice/")}>开始专项练习</a>
+            <a class="btn btn-ghost btn-lg" href={withBase("xingce/papers/")}>来一套模考</a>
+          </div>
+          <p class="hero-foot">无需注册 · 进度存在本机 · 支持键盘作答</p>
+        </div>
+
+        <aside class="today-card" aria-label="今日进度">
+          <div class="today-top">
+            <div>
+              <p class="eyebrow">今日</p>
+              <p class="today-note" data-goal-note>读取进度中…</p>
+            </div>
+            <span class="streak-pill">连续 <b data-live="streak">0</b> 天</span>
+          </div>
+          <div data-ring></div>
+          <div class="today-stats">
+            <div><strong data-live="done">0</strong><span>累计做题</span></div>
+            <div><strong><b data-live="acc">0</b>%</strong><span>正确率</span></div>
+            <div><strong data-live="wrong">0</strong><span>待复习错题</span></div>
+          </div>
+          <a class="btn btn-primary btn-block" href={withBase("xingce/practice/")}>继续今天的练习</a>
+        </aside>
+      </div>
+    </section>
+
+    <section class="band">
+      <div class="band-in">
+        <div><strong data-n={unique}>0</strong><span>道去重真题</span></div>
+        <div><strong data-n={papers}>0</strong><span>套完整试卷</span></div>
+        <div><strong data-n={index?.stats.questions ?? 0}>0</strong><span>题次覆盖</span></div>
+        <div><strong>{yearTo - yearFrom + 1}</strong><span>年真题跨度</span></div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <div class="sec-head">
+        <p class="eyebrow">六大模块</p>
+        <h2>哪块薄弱，就从哪块开始。</h2>
+        <p>每张卡片显示你在这个模块的完成度和正确率。</p>
+      </div>
+      <div class="mod-grid">
+        {
+          modules.map((mod) => (
+            <a class="mod-card" href={withBase("xingce/practice/")} data-mod={mod} data-mod-card data-total={counts[mod] ?? 0}>
+              <div class="mod-top">
+                <span class="mod-dot" />
+                <span class="mod-total">{(counts[mod] ?? 0).toLocaleString("zh-CN")} 题</span>
+              </div>
+              <h3>{mod}</h3>
+              <p>{MOD_DESC[mod] ?? ""}</p>
+              <div class="mini-bar"><i data-fill /></div>
+              <div class="mod-foot">
+                <span>已做 <b data-done>0</b></span>
+                <span>正确率 <b data-acc>—</b></span>
+              </div>
+            </a>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="sec">
+      <div class="sec-head">
+        <p class="eyebrow">两种练法</p>
+        <h2>平时练手感，考前练节奏。</h2>
+      </div>
+      <div class="feature-grid">
+        <a class="feature" href={withBase("xingce/practice/")}>
+          <div class="feature-copy">
+            <h3>专项练习</h3>
+            <p>选模块、题型、题量和范围。选完立刻判分，正确答案和官方解析当场展开。</p>
+            <span class="link-arrow">去练习 →</span>
+          </div>
+          <div class="feature-art art-practice" aria-hidden="true">
+            <div class="fa-opt is-right"><i>A</i>因地制宜</div>
+            <div class="fa-opt is-wrong"><i>B</i>一劳永逸</div>
+            <div class="fa-opt"><i>C</i>循序渐进</div>
+            <div class="fa-fb">回答正确 · 官方解析</div>
+          </div>
+        </a>
+        <a class="feature feature-dark" href={withBase("xingce/papers/")}>
+          <div class="feature-copy">
+            <h3>套卷模考</h3>
+            <p>整套真题，120 分钟倒计时。答题卡标记、可暂停，交卷后按模块出正确率和每题用时。</p>
+            <span class="link-arrow">选一套卷 →</span>
+          </div>
+          <div class="feature-art art-exam" aria-hidden="true">
+            <div class="fa-clock">01:58:42</div>
+            <div class="fa-sheet">
+              {Array.from({ length: 30 }, (_, i) => <i class={i < 17 ? "on" : i === 17 ? "cur" : i === 22 ? "flag" : ""} />)}
+            </div>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <section class="sec">
+      <div class="dash-grid">
+        <div class="panel">
+          <div class="panel-row">
+            <h2 class="panel-title">近半年活跃</h2>
+            <a class="link-arrow" href={withBase("xingce/me/")}>学习档案 →</a>
+          </div>
+          <div class="heat heat-lg" data-heat aria-label="做题热力图"></div>
+          <div class="heat-legend"><span>少</span><i data-lv="0"></i><i data-lv="1"></i><i data-lv="2"></i><i data-lv="3"></i><i data-lv="4"></i><span>多</span></div>
+        </div>
+        <div class="panel">
+          <div class="panel-row">
+            <h2 class="panel-title">最近模考</h2>
+            <a class="link-arrow" href={withBase("xingce/papers/")}>全部套卷 →</a>
+          </div>
+          <div class="mock-list" data-mocks></div>
+          {
+            recentPapers.length > 0 && (
+              <div class="suggest">
+                <p class="panel-sub">推荐试卷</p>
+                {recentPapers.map((p) => (
+                  <a class="suggest-row" href={withBase(`xingce/papers/${p.id}/`)}>
+                    <span>{p.title}</span>
+                    <small>{p.questionCount} 题</small>
+                  </a>
+                ))}
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="cta-in">
+        <h2>今天的 10 道题，现在就做。</h2>
+        <p>不用注册，打开就练。</p>
+        <a class="btn btn-light btn-lg" href={withBase("xingce/practice/")}>开始专项练习</a>
+      </div>
+    </section>
+  </main>
+</XingceLayout>
+
+<script>
+  import { bootHome } from "../../lib/xingce/view";
+  const root = document.querySelector<HTMLElement>("[data-home]");
+  if (root) bootHome(root);
+</script>

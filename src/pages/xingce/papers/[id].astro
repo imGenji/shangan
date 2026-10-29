@@ -1,0 +1,35 @@
+---
+import XingceLayout from "../../../layouts/XingceLayout.astro";
+import { readXingceIndex } from "../../../lib/xingce/index-file";
+
+export function getStaticPaths() {
+  const index = readXingceIndex();
+  if (!index) return [];
+  return index.papers.map((paper) => ({
+    params: { id: paper.id },
+    props: paper,
+  }));
+}
+
+const paper = Astro.props;
+---
+
+<XingceLayout title={paper.title}>
+  <main
+    class="xc-page"
+    id="exam-root"
+    data-id={paper.id}
+    data-title={paper.title}
+    data-region={paper.region}
+    data-year={paper.year ?? ""}
+    data-modules={paper.modules.join("|")}
+    data-count={paper.questionCount}
+  >
+  </main>
+</XingceLayout>
+
+<script>
+  import { bootExam } from "../../../lib/xingce/view";
+  const root = document.getElementById("exam-root");
+  if (root) bootExam(root);
+</script>

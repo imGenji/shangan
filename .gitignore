@@ -20,5 +20,8 @@ pnpm-debug.log*
 # macOS-specific files
 .DS_Store
 
+# 行测原始仓库，导入后的站点数据在 public/xingce
+.cache/
+
 # jetbrains setting folder
 .idea/

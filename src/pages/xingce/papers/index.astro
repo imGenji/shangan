@@ -1,0 +1,117 @@
+---
+import XingceLayout from "../../../layouts/XingceLayout.astro";
+import { withBase } from "../../../lib/base";
+import { readXingceIndex } from "../../../lib/xingce/index-file";
+
+const index = readXingceIndex();
+const papers = index?.papers ?? [];
+const years = [...new Set(papers.map((p) => p.year).filter((n): n is number => !!n))].sort((a, b) => b - a);
+const regions = [...new Set(papers.map((p) => p.region).filter(Boolean))].sort((a, b) => a.localeCompare(b, "zh"));
+const full = papers.filter((p) => p.modules.length >= 4).length;
+---
+
+<XingceLayout title="套卷模考 · 行测真题">
+  <main class="xc-page">
+    <header class="page-head">
+      <p class="eyebrow">套卷模考</p>
+      <h1 class="page-title">按真实考试，完整走一遍。</h1>
+      <p class="page-sub">{papers.length} 套试卷，其中 {full} 套覆盖四个以上模块。默认 120 分钟，交卷前不显示对错。</p>
+    </header>
+
+    {
+      papers.length === 0 ? (
+        <p class="empty">题库还没导入。</p>
+      ) : (
+        <>
+          <div class="toolbar">
+            <label class="search">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4 4" /></svg>
+              <input id="paper-q" type="search" placeholder="搜索：国考、江苏、副省级…" autocomplete="off" />
+            </label>
+            <select id="year-filter" aria-label="年份">
+              <option value="">全部年份</option>
+              {years.map((y) => <option value={String(y)}>{y} 年</option>)}
+            </select>
+            <select id="region-filter" aria-label="地区">
+              <option value="">全部地区</option>
+              {regions.map((r) => <option value={r}>{r}</option>)}
+            </select>
+            <span class="toolbar-count"><b id="paper-count">{papers.length}</b> 套</span>
+          </div>
+
+          <div class="paper-grid" id="paper-list">
+            {papers.map((p) => (
+              <a
+                class="paper-card"
+                href={withBase(`xingce/papers/${p.id}/`)}
+                data-year={p.year ?? ""}
+                data-region={p.region}
+                data-title={p.title}
+                data-id={p.id}
+              >
+                <div class="paper-top">
+                  <span class="year-badge">{p.year ?? "—"}</span>
+                  <span class="tag tag-soft">{p.region || "其他"}</span>
+                  <span class="best" data-best hidden />
+                </div>
+                <h3>{p.title}</h3>
+                <div class="paper-mods">
+                  {p.modules.map((m) => <span class="mod-pip" data-mod={m} title={m} />)}
+                </div>
+                <div class="paper-foot">
+                  <span>{p.questionCount} 题 · {p.modules.length} 个模块</span>
+                  <span class="link-arrow">开始 →</span>
+                </div>
+              </a>
+            ))}
+          </div>
+          <p class="empty" id="paper-none" hidden>没有符合条件的试卷。</p>
+        </>
+      )
+    }
+  </main>
+</XingceLayout>
+
+<script>
+  import { readDb } from "../../../lib/xingce/store";
+
+  const q = document.getElementById("paper-q") as HTMLInputElement | null;
+  const year = document.getElementById("year-filter") as HTMLSelectElement | null;
+  const region = document.getElementById("region-filter") as HTMLSelectElement | null;
+  const count = document.getElementById("paper-count");
+  const none = document.getElementById("paper-none");
+  const cards = [...document.querySelectorAll<HTMLElement>("#paper-list .paper-card")];
+
+  const best = new Map<string, number>();
+  for (const m of readDb().mocks) {
+    const p = Math.round((m.score / Math.max(1, m.total)) * 100);
+    best.set(m.paperId, Math.max(best.get(m.paperId) ?? 0, p));
+  }
+  for (const card of cards) {
+    const b = best.get(card.dataset.id ?? "");
+    const el = card.querySelector<HTMLElement>("[data-best]");
+    if (el && b != null) {
+      el.hidden = false;
+      el.textContent = `最佳 ${b}%`;
+    }
+  }
+
+  function apply() {
+    const words = (q?.value ?? "").trim().toLowerCase().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    for (const card of cards) {
+      const text = `${card.dataset.title} ${card.dataset.region} ${card.dataset.year}`.toLowerCase();
+      const ok =
+        (!year?.value || card.dataset.year === year.value) &&
+        (!region?.value || card.dataset.region === region.value) &&
+        words.every((w) => text.includes(w));
+      card.hidden = !ok;
+      if (ok) shown++;
+    }
+    if (count) count.textContent = String(shown);
+    if (none) none.hidden = shown > 0;
+  }
+  q?.addEventListener("input", apply);
+  year?.addEventListener("change", apply);
+  region?.addEventListener("change", apply);
+</script>

@@ -10,6 +10,7 @@
     "build": "node scripts/check-quiz-analyses.mjs && astro build",
     "preview": "astro preview",
     "import:quizzes": "node scripts/import-all.mjs",
+    "import:xingce": "node scripts/import-xingce.mjs",
     "pick:quizzes": "node scripts/quiz-pick.mjs",
     "gen:analyses": "node scripts/gen-analyses.mjs",
     "check:quizzes": "node scripts/check-quiz-analyses.mjs",

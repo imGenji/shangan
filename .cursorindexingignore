@@ -1,0 +1,6 @@
+# 题库数据和图片（约 4 万文件），由 scripts/import-xingce.mjs 生成
+public/xingce/
+# 构建产物
+dist/
+# 上游原始题库
+.cache/

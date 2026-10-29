@@ -1,0 +1,13 @@
+---
+import XingceLayout from "../../layouts/XingceLayout.astro";
+---
+
+<XingceLayout title="我的行测">
+  <main class="xc-page" id="me-root"></main>
+</XingceLayout>
+
+<script>
+  import { bootMe } from "../../lib/xingce/view";
+  const root = document.getElementById("me-root");
+  if (root) bootMe(root);
+</script>

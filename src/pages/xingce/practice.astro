@@ -1,0 +1,13 @@
+---
+import XingceLayout from "../../layouts/XingceLayout.astro";
+---
+
+<XingceLayout title="专项练习">
+  <main class="xc-page" id="practice-root"></main>
+</XingceLayout>
+
+<script>
+  import { bootPractice } from "../../lib/xingce/view";
+  const root = document.getElementById("practice-root");
+  if (root) bootPractice(root);
+</script>
