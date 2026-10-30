@@ -177,20 +177,51 @@ function plainText(raw: string, max = 90) {
 
 /* ---------- 数据装配 ---------- */
 
-async function hydrate(refs: TypeRef[]): Promise<Item[]> {
-  const groups = new Map<string, TypeRef[]>();
+type PaperGroup = { key: string; paperId: string; module: string; refs: TypeRef[] };
+
+/** 按「试卷 + 模块」合并，同一份 JSON 只下载一次；顺序跟抽中的题一致 */
+function groupRefs(refs: TypeRef[]): PaperGroup[] {
+  const map = new Map<string, PaperGroup>();
   for (const ref of refs) {
     const key = `${ref.paperId}:${ref.module}`;
-    const bucket = groups.get(key) ?? [];
-    bucket.push(ref);
-    groups.set(key, bucket);
+    const group = map.get(key) ?? { key, paperId: ref.paperId, module: ref.module, refs: [] };
+    group.refs.push(ref);
+    map.set(key, group);
   }
+  return [...map.values()];
+}
+
+function withTimeout<T>(pending: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    pending.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
+type DrawStep = { key: string; status: "loading" | "done"; ready: number };
+
+async function hydrate(refs: TypeRef[], onStep?: (step: DrawStep) => void): Promise<Item[]> {
+  const groups = groupRefs(refs);
   const found = new Map<string, Item>();
-  await Promise.all(
-    [...groups.values()].map(async (list) => {
-      const slice = await loadSlice(list[0].paperId, list[0].module);
+  let cursor = 0;
+  let ready = 0;
+  // 同时最多读 3 套，加载列表上能看出当前在读哪套
+  const worker = async () => {
+    while (cursor < groups.length) {
+      const group = groups[cursor++];
+      onStep?.({ key: group.key, status: "loading", ready });
+      const slice = await withTimeout(loadSlice(group.paperId, group.module), 20000, "题目下载超时，请换个网络再试");
       const byId = new Map(slice.questions.map((q) => [q.qid, q]));
-      for (const ref of list) {
+      for (const ref of group.refs) {
         const q = byId.get(ref.qid);
         if (!q) continue;
         found.set(ref.qid, {
@@ -202,10 +233,70 @@ async function hydrate(refs: TypeRef[]): Promise<Item[]> {
           picked: [],
           ms: 0,
         });
+        ready++;
       }
-    }),
-  );
+      onStep?.({ key: group.key, status: "done", ready });
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(3, groups.length) }, worker));
   return refs.flatMap((ref) => found.get(ref.qid) ?? []);
+}
+
+type DrawRow = { key: string; title: string; module: string; n: number };
+
+/** 组卷加载层：题数进度 + 每套试卷的读取状态 */
+function mountDraw(root: HTMLElement, rows: DrawRow[], total: number) {
+  const num = h("strong", { class: "draw-num", text: "0" });
+  const paper = h("p", { class: "draw-paper", text: "正在连接题库" });
+  const bar = h("i");
+  const list = h("ol", { class: "draw-list" });
+  const byKey = new Map<string, { li: HTMLElement; state: HTMLElement }>();
+  for (const row of rows) {
+    const state = h("b", { text: "等待" });
+    const li = h(
+      "li",
+      {},
+      h("span", { class: "draw-dot" }),
+      h("span", { class: "draw-copy" }, h("strong", { text: row.title }), h("span", { class: "draw-meta", text: `${row.module} · ${row.n} 题` })),
+      state,
+    );
+    byKey.set(row.key, { li, state });
+    list.append(li);
+  }
+  const veil = h(
+    "div",
+    { class: "draw-veil", role: "status", "aria-live": "polite" },
+    h(
+      "section",
+      { class: "draw-card" },
+      h("p", { class: "eyebrow", text: "正在组卷" }),
+      h("div", { class: "draw-count" }, num, h("span", { text: `/ ${total} 题` })),
+      paper,
+      h("div", { class: "prog draw-prog" }, bar),
+      list,
+    ),
+  );
+  root.append(veil);
+  const titleOf = new Map(rows.map((row) => [row.key, row.title]));
+  return {
+    close() {
+      veil.remove();
+    },
+    mark(key: string, status: "loading" | "done", ready: number) {
+      const row = byKey.get(key);
+      if (!row) return;
+      row.li.classList.toggle("is-on", status === "loading");
+      row.li.classList.toggle("is-done", status === "done");
+      row.state.textContent = status === "loading" ? "读取中" : "已就绪";
+      if (status === "loading") paper.textContent = titleOf.get(key) ?? "";
+      num.textContent = String(ready);
+      bar.style.width = `${total ? (ready / total) * 100 : 0}%`;
+      const top = row.li.offsetTop;
+      if (top < list.scrollTop || top > list.scrollTop + list.clientHeight - row.li.offsetHeight) {
+        list.scrollTop = Math.max(0, top - 8);
+      }
+    },
+  };
 }
 
 function saveOne(item: Item) {
@@ -363,16 +454,28 @@ function renderSetup(root: HTMLElement, index: XingceIndex, initialPool: string)
   start.addEventListener("click", async () => {
     const refs = candidates();
     if (!refs.length) return;
+    const picked = shuffle(refs).slice(0, count);
+    const titleOf = new Map(index.papers.map((p) => [p.id, p.title]));
+    const draw = mountDraw(
+      root,
+      groupRefs(picked).map((g) => ({
+        key: g.key,
+        title: titleOf.get(g.paperId) || "试卷",
+        module: g.module,
+        n: g.refs.length,
+      })),
+      picked.length,
+    );
     start.setAttribute("disabled", "");
-    start.firstChild!.textContent = "抽题中…";
     try {
-      const items = await hydrate(shuffle(refs).slice(0, count));
+      const items = await hydrate(picked, (step) => draw.mark(step.key, step.status, step.ready));
+      draw.close();
       if (!items.length) throw new Error("题目文件缺失");
       runSession(root, items, "practice", 0, `专项练习 · ${items.length} 题`);
     } catch (e) {
+      draw.close();
       err.textContent = e instanceof Error ? e.message : "抽题失败";
       start.removeAttribute("disabled");
-      start.firstChild!.textContent = "开始练习";
     }
   });
 

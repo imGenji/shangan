@@ -105,6 +105,43 @@ img { max-width: 100%; height: auto; }
 .loading, .empty { color: var(--muted); line-height: 1.6; }
 .empty { padding: 1rem 0; }
 .form-err { color: var(--bad); min-height: 1.2em; margin: 0.6rem 0 0; font-size: 0.88rem; }
+
+/* 组卷加载层 */
+.draw-veil {
+  position: fixed; inset: 0; z-index: 80; display: grid; place-items: center;
+  padding: max(1.25rem, env(safe-area-inset-top)) 1.25rem max(1.25rem, env(safe-area-inset-bottom));
+  background: rgba(239, 233, 221, 0.82); backdrop-filter: blur(16px);
+}
+.draw-card {
+  width: min(460px, 100%); background: var(--card); border: 1px solid var(--line);
+  border-radius: 28px; box-shadow: var(--shadow-lg); padding: 1.5rem 1.35rem 1.15rem;
+}
+.draw-count { display: flex; align-items: baseline; gap: 0.4rem; margin: 0.35rem 0 0.45rem; }
+.draw-num { font-size: 3.1rem; letter-spacing: -0.05em; line-height: 1; font-variant-numeric: tabular-nums; }
+.draw-count span { color: var(--muted); font-size: 1rem; }
+.draw-paper {
+  margin: 0 0 0.9rem; min-height: 2.7em; font-weight: 650; line-height: 1.35; color: var(--fg-2);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.draw-prog { margin-bottom: 0.85rem; }
+.draw-list {
+  list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; position: relative;
+  max-height: min(42vh, 320px); overflow: auto;
+}
+.draw-list li {
+  display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; gap: 0.7rem; align-items: center;
+  padding: 0.55rem 0.7rem; border-radius: 12px; background: var(--bg);
+}
+.draw-dot { width: 8px; height: 8px; border-radius: 99px; background: var(--line-2); }
+.draw-copy { min-width: 0; }
+.draw-copy strong { display: block; font-size: 0.88rem; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.draw-meta { color: var(--muted); font-size: 0.75rem; }
+.draw-list b { font-size: 0.75rem; font-weight: 650; color: var(--muted); }
+.draw-list li.is-on { background: var(--brand-soft); }
+.draw-list li.is-on .draw-dot { background: var(--brand); box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 16%, transparent); }
+.draw-list li.is-on b { color: var(--brand); }
+.draw-list li.is-done .draw-dot { background: var(--ok); }
+.draw-list li.is-done b { color: var(--ok); }
 .spacer { flex: 1; }
 
 .btn {
